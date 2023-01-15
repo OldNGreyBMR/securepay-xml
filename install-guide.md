@@ -1,6 +1,6 @@
-Date Submitted: 2022-04-03
+Date Submitted: 2023-01-15
 Author:         OldNGrey (BMH)
-Version:        156
+Version:        158
 
 "SecurePay XML API" 
 ====================
@@ -15,13 +15,19 @@ It supports the following kinds of transactions:
 
 BMH  changes
 ============
-Amendments made to be compatible with Zen Cart 157c and 157d and PHP 8.0 (also works with zen cart 1.5.6a and PHP 7.3)
+Amendments made to be compatible with Zen Cart 158 and 157d and PHP 8.0 and PHP 8.1
+2022-08-20  modified lang file for zc158
+
+2022 Zen Cart 157c includes\modules\payments\includes\modules\payments\ 
+    securepayxml.php and securepay_xml_api.php 
+    modified to only pass invoice enumber as txnid
+    
 see file changelog.md for all changes
 
 Dependencies:
 --------------
-Zen Cart 1.5.6a or greater to 157d
-PHP 7.3.14 or or PHP 8.0 
+Zen Cart 1.5.7d or greater to 158
+PHP 8.0 or PHP 8.1
 cURL
 
 "SecurePay XML API" Installation Guide for Zen Cart 1.5.7
