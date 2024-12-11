@@ -1,7 +1,7 @@
 <?php
 /**
  * securepayxml.php
- * Version: v156a
+ * Version: v157a
  * Implements the SecurePay XML API payment module for Zen Cart
  *
  * Contains the securepayxml class, which handles SecurePay XML API credit-card transactions via the securepay_xml_transaction class (securepay_xml_api.php).
@@ -24,9 +24,14 @@
 //			line 644
 // BMH 2020 to work with zc157a and PHP 7.4.9
 //		line 41 deprecated constructor
-// BMH 2024-10-20 ln 414 change log file output
+// BMH 2024-10-20 ln 414 change log file output;
+//     2024-12-01 removed debugging lines; prefixed public/ private to function names
+// BMH 2024-12-11 ln300 str_repeat() Argument #2 ($times) must be greater than or equal to 0
+//                ln223 229 304 strftime;
+//                ln32 E_STRICT deprecated PHP8.4 not used 8.0+
 
-@ini_set('error_reporting', E_STRICT);
+// BMH @ini_set('error_reporting', E_STRICT);
+@ini_set('error_reporting', E_ALL & ~E_DEPRECATED);  // BMH
 
 // BMH check which zc version and preload language files if required.
 // Language files may be required if this module is called directly eg from edit _orders
@@ -62,26 +67,28 @@ if (!defined('TABLE_SECUREPAYXML')) define('TABLE_SECUREPAYXML', DB_PREFIX . 'se
 
 require_once(DIR_FS_CATALOG . DIR_WS_MODULES . 'payment/securepay_xml_api.php');
 
-class securepayxml
+class securepayxml extends base
 {
 	public $payment_status, $auth_code, $transaction_id, $purchaseOrderId; // BMH
 	private $_logDir = DIR_FS_SQL_CACHE;
 
 	private $mode = SECUREPAY_GATEWAY_MODE_TEST;
 
-	public $title,$code, $description, $enabled;
+    public $code;                       // $code determines the internal 'code' name used to designate "this" payment module * @var string
+    public $description;                // $description is admin-display details for this payment method  @var string
+    public $enabled;                    // $enabled determines whether this module shows or not... in catalog.  @var boolean
+    public $moduleVersion = '1.5.7';    // $moduleVersion is the plugin version number
+    public $title;                      // $title is the displayed name for this payment method @var string
 
-	//function securepayxml() // BMH 2020-11
-	function __construct()
+	//function securepayxml()
+	public function __construct()
 	{
 		global $order, $messageStack;
 
 		$this->code = 'securepayxml';
 		$this->enabled = ((MODULE_PAYMENT_SECUREPAYXML_STATUS == 'True') ? true : false); // Whether the module is installed or not
 	// BMH 2020-11-14 Undefined index: main_page bof
-//if (!isset($_GET['main_page'])) , $_GET['main_page'] = 'index';
-
-if ($_GET['main_page'] != '' && !IS_ADMIN_FLAG === true)
+        if ($_GET['main_page'] != '' && !IS_ADMIN_FLAG === true)
 		{
 			$this->title = MODULE_PAYMENT_SECUREPAYXML_TEXT_CATALOG_TITLE; // Payment module title in Catalog
 		}
@@ -139,7 +146,7 @@ if ($_GET['main_page'] != '' && !IS_ADMIN_FLAG === true)
 		}
 	}
 
-	function update_status()
+	public function update_status()
 	{
 		global $order, $db;
 
@@ -182,7 +189,7 @@ if ($_GET['main_page'] != '' && !IS_ADMIN_FLAG === true)
 	}
 
 	/* Included in the payment form. */
-	function javascript_validation()
+	public function javascript_validation()
 	{
 		$js = 	'	if (payment_value == "' . $this->code . '") {' . "\n" .
 				'		var cc_owner = document.checkout_payment.securepayxml_cc_owner.value;' . "\n" .
@@ -212,13 +219,15 @@ if ($_GET['main_page'] != '' && !IS_ADMIN_FLAG === true)
 
 		for ($i=1; $i<13; $i++)
 		{
-			$expires_month[] = array('id' => sprintf('%02d', $i), 'text' => strftime('%B - (%m)',mktime(0,0,0,$i,1,2000)));
+			// BMH $expires_month[] = array('id' => sprintf('%02d', $i), 'text' => strftime('%B - (%m)',mktime(0,0,0,$i,1,2000)));
+            $expires_month[] = array('id' => sprintf('%02d', $i), 'text' => $zcDate->output('%B - (%m)',mktime(0,0,0,$i,1,2000))); // BMH
 		}
 
 		$today = getdate();
 		for ($i=$today['year']; $i < $today['year']+10; $i++)
 		{
-			$expires_year[] = array('id' => strftime('%y',mktime(0,0,0,1,1,$i)), 'text' => strftime('%Y',mktime(0,0,0,1,1,$i)));
+			// BMH $expires_year[] = array('id' => strftime('%y',mktime(0,0,0,1,1,$i)), 'text' => strftime('%Y',mktime(0,0,0,1,1,$i)));
+            $expires_year[] = array('id' => $zcDate->output('%y',mktime(0,0,0,1,1,$i)), 'text' => $zcDate->output('%Y',mktime(0,0,0,1,1,$i)));    // BMH
 		}
 
 		$onFocus = ' onfocus="methodSelect(\'pmt-' . $this->code . '\')"';
@@ -255,7 +264,7 @@ if ($_GET['main_page'] != '' && !IS_ADMIN_FLAG === true)
 
 
 	/* Secondary credit-card detail check. */
-	function pre_confirmation_check()
+	public function pre_confirmation_check()
 	{
 		global $db, $messageStack;
 
@@ -286,26 +295,19 @@ if ($_GET['main_page'] != '' && !IS_ADMIN_FLAG === true)
 	}
 
 	/* Display Credit Card Information on the Checkout Confirmation Page */
-	function confirmation()
-	{
-		$confirmation = array(
-			'title' => $this->title . ': ' . $this->cc_card_type,
-			'fields' => array(
-				array(
-					'title' => MODULE_PAYMENT_SECUREPAYXML_TEXT_CREDIT_CARD_OWNER,
-					'field' => $_POST['securepayxml_cc_owner']
-				),
-				array(
-					'title' => MODULE_PAYMENT_SECUREPAYXML_TEXT_CREDIT_CARD_NUMBER,
-					'field' => str_repeat('X', (strlen($this->cc_card_number) - 4)) . substr($this->cc_card_number, -4)
-				),
-				array(
-					'title' => MODULE_PAYMENT_SECUREPAYXML_TEXT_CREDIT_CARD_EXPIRES,
-					'field' => strftime('%B, %Y', mktime(0,0,0,$_POST['securepayxml_cc_expires_month'], 1, '20' . $_POST['securepayxml_cc_expires_year']))
-				)
-			)
-		);
-
+    public function confirmation() 	{
+        $this->cc_card_number = preg_replace('/[^0-9]/','',$this->cc_card_number);
+        if  ((strlen($this->cc_card_number)) < 1 ) { echo '<br> ln294 length <1'; return;}
+        //$this->cc_card_number = $cc_validation->cc_number;
+		$confirmation =
+            array('title' => $this->title . ': ' . $this->cc_card_type,
+                'fields' => array(array('title' => MODULE_PAYMENT_SECUREPAYXML_TEXT_CREDIT_CARD_OWNER,
+                'field' => $_POST['securepayxml_cc_owner']),
+            array('title' => MODULE_PAYMENT_SECUREPAYXML_TEXT_CREDIT_CARD_NUMBER,
+                'field' => str_repeat('X', (strlen($this->cc_card_number) - 4)) . substr($this->cc_card_number, -4)),
+            array('title' => MODULE_PAYMENT_SECUREPAYXML_TEXT_CREDIT_CARD_EXPIRES,
+                // BMH 'field' => strftime('%B, %Y', mktime(0,0,0,$_POST['securepayxml_cc_expires_month'], 1, '20' . $_POST['securepayxml_cc_expires_year']))
+                'field' => $zcDate->output('%B, %Y', mktime(0,0,0,$_POST['securepayxml_cc_expires_month'], 1, '20' . $_POST['securepayxml_cc_expires_year'])) ) ) );
 		return $confirmation;
 	}
 
@@ -314,7 +316,7 @@ if ($_GET['main_page'] != '' && !IS_ADMIN_FLAG === true)
 	 *
 	 * Not sure why this is the preferred method of passing CC details, but it is common to all payment modules, and over SSL it isn't too terrible.
 	 */
-	function process_button()
+	public function process_button()
 	{
 		// These are hidden fields on the checkout confirmation page
 		$process_button_string =
@@ -326,25 +328,21 @@ if ($_GET['main_page'] != '' && !IS_ADMIN_FLAG === true)
 			zen_draw_hidden_field('cc_number', $this->cc_card_number) .
 			zen_draw_hidden_field('cc_cvv', $_POST['securepayxml_cc_cvv']) .
 			zen_draw_hidden_field(zen_session_name(), zen_session_id());
- // BMH DEBUG echo ' BMH line 290 var_dump process button string'; // BMH debug
-// BMH DEBUG var_dump($process_button_string); // BMH
 		return $process_button_string;
 	}
 
 	/**
 	 * Prepare and submit the authorization to the gateway
 	 */
-	function before_process()
+	public function before_process()
 	{
- // BMH DEBUG echo ' BMH before process line 299' . "<br>"; // BMH debug
 		global $order, $db, $messageStack, $_POST, $_SESSION;
 
 		$preauth = "";
 		$txnid = "";
 
 		$sxml = new securepay_xml_transaction($this->mode,MODULE_PAYMENT_SECUREPAYXML_MERCHANTID,MODULE_PAYMENT_SECUREPAYXML_MERCHANTPASS);
-	// BMH DEBUG	echo 'BMH sxml line 306' . "<br>"; //BMH
-// BMH DEBUG var_dump($sxml);  // BMH
+
 		$customer_id = $_SESSION['customer_id'];
 
 		$amount = $order->info['total'];
@@ -369,14 +367,11 @@ if ($_GET['main_page'] != '' && !IS_ADMIN_FLAG === true)
 			$result = $sxml->processCreditPreauth($amount,$oid,$cc_number,$cc_month,$cc_year,$cvv);
 		}
 		else
-		{ // BMH debug
-			// BMH DEBUG echo 'securepayxml line 331 $oid=' . $oid; // BMH
+		{
 			$result = $sxml->processCreditStandard($amount,$oid,$cc_number,$cc_month,$cc_year,$cvv);
-			// BMH DEBUG var_dump($result); // BMH
 		}
 
 		$txnResultCodeText = $sxml->getErrorString();
-		// BMH DEBUG echo 'BMH line 338 $txnResultCodeText=' . $txnResultCodeText;  // BMH
 
 		$approved = strtoupper($sxml->getResultByKeyName('approved'))=='YES'?true:false;
 		$status = $sxml->getResultByKeyName('responseCode');
@@ -388,15 +383,10 @@ if ($_GET['main_page'] != '' && !IS_ADMIN_FLAG === true)
                 $obj = simplexml_load_string($res_xml_string); // Parse XML
                 $array = json_decode(json_encode($obj), true); // Convert to array
                 $this->purchaseOrderId = $array['Payment']['TxnList']['Txn']['purchaseOrderNo'];
-		// BMH
-		// BMH DEBUG	echo " BMH response line 343 " . $array['Payment']['TxnList']['Txn']['purchaseOrderNo'];
-		// BMH DEBUG	echo "$this->purchaseOrderId" . $this->purchaseOrderId;
-			//END get purchaseOrderNo from response
 
 		if ($approved)
 		{
 			//Success
-//echo "BMH SUCCESS line 358"; // BMH
 
 			if($type == SECUREPAY_TXN_PREAUTH)
 			{
@@ -413,7 +403,6 @@ if ($_GET['main_page'] != '' && !IS_ADMIN_FLAG === true)
 			$messageStack->add_session('checkout_payment',MODULE_PAYMENT_SECUREPAYXML_TEXT_DECLINED_MESSAGE, 'error');
             $customer_id = $_SESSION['customer_id'];
 			$this->_log("" . $txnResultCodeText . ": $" . $amount . " #" .$oid . " Cust:". $customer_id); // BMH
-           // BMH $this->_log("" . $txnResultCodeText);
 			zen_redirect(zen_href_link(FILENAME_CHECKOUT_PAYMENT, '', 'SSL', true, false));
 		}
 
@@ -435,7 +424,7 @@ if ($_GET['main_page'] != '' && !IS_ADMIN_FLAG === true)
 		return true;
 	}
 
-	function after_process()
+	public function after_process()
 	{
 		global $insert_id, $db;
 		$comments = (MODULE_PAYMENT_SECUREPAYXML_MODE == MODULE_PAYMENT_SECUREPAYXML_MODE_PREAUTH ? MODULE_PAYMENT_SECUREPAYXML_MODE_PREAUTH_DESC : MODULE_PAYMENT_SECUREPAYXML_MODE_STANDARD_DESC);
@@ -448,20 +437,15 @@ if ($_GET['main_page'] != '' && !IS_ADMIN_FLAG === true)
 
 		$db->Execute("insert into " . TABLE_ORDERS_STATUS_HISTORY . " (comments, orders_id, orders_status_id, date_added) values ('Credit Card payment. " . $comments . " " . $this->cc_card_type . " Transaction ID: " . $this->transaction_id . "' , '". (int)$insert_id . "','" . $this->order_status . "', now() )");
           // update purchaseOrderId for order
-				// BMH DEBUG	 echo " BMH $this->purchaseOrderId=" . $this->purchaseOrderId . "line 403";
-					// BMH 2019-01-09 purchaseOrderId does not exist in table
-					//              $db->Execute("UPDATE ".TABLE_ORDERS." SET `purchaseOrderId` = '".$this->purchaseOrderId."' WHERE `orders_id` = ".(int)$insert_id);
-													// END update purchaseOrderId for order
-					// BMH end
 		return false;
 	}
 
-	function after_order_create($zf_order_id)
+	public function after_order_create($zf_order_id)
 	{
 		return;
 	}
 
-	function admin_notification($oid)
+	public function admin_notification($oid)
 	{
 		global $db;
 
@@ -485,7 +469,7 @@ if ($_GET['main_page'] != '' && !IS_ADMIN_FLAG === true)
 		return $output;
 	}
 
-	function get_error()
+	public function get_error()
 	{
 		$error = array(
 			'title' => MODULE_PAYMENT_SECUREPAYXML_TEXT_ERROR,
@@ -494,7 +478,7 @@ if ($_GET['main_page'] != '' && !IS_ADMIN_FLAG === true)
 		return $error;
 	}
 
-	function check()
+	public function check()
 	{
 		global $db;
 		if (!isset($this->_check))
@@ -505,7 +489,7 @@ if ($_GET['main_page'] != '' && !IS_ADMIN_FLAG === true)
 		return $this->_check;
 	}
 
-	function install()
+	public function install()
 	{
 		global $db;
 		$db->Execute("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) values ('Enable Securepayxml Module', 'MODULE_PAYMENT_SECUREPAYXML_STATUS', 'True', 'Do you want to accept SecurePay credit card payments?', '6', 121, 'zen_cfg_select_option(array(\'True\', \'False\'), ', now());");
@@ -543,7 +527,7 @@ if ($_GET['main_page'] != '' && !IS_ADMIN_FLAG === true)
                 $db->Execute($sql);
 	}
 
-	function remove()
+	public function remove()
 	{
 		global $db, $sniffer;
 		$db->Execute("delete from " . TABLE_CONFIGURATION . " where configuration_key like 'MODULE\_PAYMENT\_SECUREPAYXML\_%'");
@@ -554,7 +538,7 @@ if ($_GET['main_page'] != '' && !IS_ADMIN_FLAG === true)
 		}
 	}
 
-	function keys()
+	public function keys()
 	{
 		$keys_list = array(
 			'MODULE_PAYMENT_SECUREPAYXML_STATUS',
@@ -572,14 +556,13 @@ if ($_GET['main_page'] != '' && !IS_ADMIN_FLAG === true)
 		return $keys_list;
 	}
 
-	function _log($msg, $suffix = '')
+	public function _log($msg, $suffix = '')
 	{
 		$file = $this->_logDir . '/' . 'Securepayxml.log';
 		if ($fp = @fopen($file, 'a'))
 		{
             $today = date("Y-m-d_H-i");         // BMH
 			@fwrite($fp, "".time().": ".$today . ": " .$msg . " " . $purchaseOrderId ."\r\n"); // stores epoch time + date
-            // BMH @fwrite($fp, "".time().": ".$msg); // stores time as epoch time
 			@fclose($fp);
 		}
 	}
@@ -587,7 +570,7 @@ if ($_GET['main_page'] != '' && !IS_ADMIN_FLAG === true)
 	/**
 	 * Update order status and order status history based on admin changes sent to gateway
 	 */
-	function _updateOrderStatus($oID, $new_order_status, $comments)
+	private function _updateOrderStatus($oID, $new_order_status, $comments)
 	{
 		global $db;
 		$sql_data_array = array(
@@ -610,7 +593,7 @@ if ($_GET['main_page'] != '' && !IS_ADMIN_FLAG === true)
 	 *
 	 * Use -1 values for fields you do not wish to update.
 	 */
-	function _updateTxn($oid, $amount=0, $txn=-1,$type=-1)
+	private function _updateTxn($oid, $amount=0, $txn=-1,$type=-1)
 	{
 		global $db;
 		$query = "update " . TABLE_SECUREPAYXML . " set ";
@@ -644,7 +627,7 @@ if ($_GET['main_page'] != '' && !IS_ADMIN_FLAG === true)
 	/**
 	 * Used to submit a refund for a given transaction.
 	 */
-	function _doRefund($oID, $amount = 0)
+	public function _doRefund($oID, $amount = 0)
 	{
 		global $db, $messageStack;
 
@@ -692,12 +675,7 @@ if ($_GET['main_page'] != '' && !IS_ADMIN_FLAG === true)
 		$sxml = new securepay_xml_transaction($this->mode,MODULE_PAYMENT_SECUREPAYXML_MERCHANTID,MODULE_PAYMENT_SECUREPAYXML_MERCHANTPASS);
 
 		//Issue a refund transaction
-                // BMH debug
-			//	echo ' BMH 1 $purchaseOrderId=' . $purchaseOrderId . "line 640";
-			//echo ' BMH 2 This->purchaseOrderId=' . $this->purchaseOrderId . "line 640";
-      //          $sql_purchaseOrderId = 'select purchaseOrderId from ' . TABLE_ORDERS . " where orders_id = " . (int)$oID;
-		 //$query_purchaseOrderId = $db->Execute($sql_purchaseOrderId);
-                $purchaseOrderId = $query_purchaseOrderId->fields['purchaseOrderId'];
+        $purchaseOrderId = $query_purchaseOrderId->fields['purchaseOrderId'];
 
 		$bankTxnID = $sxml->processCreditRefund($amount,$purchaseOrderId,$query->fields['banktxnid']);
 
@@ -728,7 +706,7 @@ if ($_GET['main_page'] != '' && !IS_ADMIN_FLAG === true)
 	/**
 	 * Used to capture part or all of a given previously-authorized transaction. Can only be used once per preauth for an amount equal to or less than the preauth amount.
 	 */
-	function _doCapt($oID, $amt = 0, $currency = 'AUD')
+	private function _doCapt($oID, $amt = 0, $currency = 'AUD')
 	{
 		global $db, $messageStack;
 
@@ -793,7 +771,7 @@ if ($_GET['main_page'] != '' && !IS_ADMIN_FLAG === true)
 	/**
 	 * Used to void a completed transaction.
 	 */
-	function _doVoid($oID, $note = '')
+	public function _doVoid($oID, $note = '')
 	{
 		global $db, $messageStack;
 
