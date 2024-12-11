@@ -1,6 +1,6 @@
-Date Submitted: 2022-04-03
+Date Submitted: 2022-12-11
 Author:         OldNGrey (BMH)
-Version:        156
+Version:        157a
 
 "SecurePay XML API" 
 ====================
@@ -20,11 +20,11 @@ see file changelog.md for all changes
 
 Dependencies:
 --------------
-Zen Cart 1.5.6a or greater to 157d
-PHP 7.3.14 or or PHP 8.0 
+Zen Cart 1.5.8a or greater
+PHP 8.0 to 8.4
 cURL
 
-"SecurePay XML API" Installation Guide for Zen Cart 1.5.7
+"SecurePay XML API" Installation Guide for Zen Cart 1.5.7a
 =========================================================
 REQUIREMENTS:
 SecurePay merchant identifier and password See [ https://www.securepay.com.au/ ]
