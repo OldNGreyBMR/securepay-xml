@@ -15,7 +15,7 @@ It supports the following kinds of transactions:
 
 BMH  changes
 ============
-Amendments made to be compatible with Zen Cart 157c and 157d and PHP 8.0 (also works with zen cart 1.5.6a and PHP 7.3)
+Amendments made to be compatible with Zen Cart 158a, 2.0.x and 2.1.0 and PHP 8.0+ 
 see file changelog.md for all changes
 
 Dependencies:
@@ -24,7 +24,7 @@ Zen Cart 1.5.8a or greater
 PHP 8.0 to 8.4
 cURL
 
-"SecurePay XML API" Installation Guide for Zen Cart 1.5.7a
+"SecurePay XML API" Installation Guide for Zen Cart 1.5.8a +
 =========================================================
 REQUIREMENTS:
 SecurePay merchant identifier and password See [ https://www.securepay.com.au/ ]
