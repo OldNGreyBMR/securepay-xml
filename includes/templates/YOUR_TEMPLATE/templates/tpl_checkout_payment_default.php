@@ -2,7 +2,7 @@
 /**
  * Page Template
  *
- * BOOTSTRAP v3.5.0
+ * BOOTSTRAP v3.0.0
  *
  * Loaded automatically by index.php?main_page=checkout_payment.<br />
  * Displays the allowed payment modules, for selection by customer.
@@ -12,9 +12,9 @@
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
  * @version $Id: DrByte 2020 Oct 29 Modified in v1.5.7a $
  */
-//BMH 2019-01-13    ln152 include SecurePay logo 
-//                  image securepay_logo_rgb.png in /images/icons
-//BMH 2020-11-28 ln 138
+//BMH 2019-01-13 include SecurePay logo line 153 
+//								image securepay_logo_rgb.png in /images/icons
+//BMH 2020-11-28 line 138
 ?>
 <?php echo $payment_modules->javascript_validation(); ?>
 <div id="checkoutPayment" class="centerColumn">
