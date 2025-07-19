@@ -1,4 +1,4 @@
-Date Submitted: 2023-01-15
+Date Submitted: 2025-07-20
 Author:         OldNGrey (BMH)
 Version:        158
 
@@ -15,22 +15,16 @@ It supports the following kinds of transactions:
 
 BMH  changes
 ============
-Amendments made to be compatible with Zen Cart 158 and 157d and PHP 8.0 and PHP 8.1
-2022-08-20  modified lang file for zc158
-
-2022 Zen Cart 157c includes\modules\payments\includes\modules\payments\ 
-    securepayxml.php and securepay_xml_api.php 
-    modified to only pass invoice enumber as txnid
-    
+Amendments made to be compatible with Zen Cart 158, 158a, 200, and 210 and PHP 8.0 to 8.4.
 see file changelog.md for all changes
 
 Dependencies:
 --------------
-Zen Cart 1.5.7d or greater to 158
-PHP 8.0 or PHP 8.1
+Zen Cart 1.5.8a or greater to 2.1.0
+PHP 8.0 to 8.4
 cURL
 
-"SecurePay XML API" Installation Guide for Zen Cart 1.5.7
+"SecurePay XML API" Installation Guide for Zen Cart 1.5.8 adn 2.1.0
 =========================================================
 REQUIREMENTS:
 SecurePay merchant identifier and password See [ https://www.securepay.com.au/ ]
@@ -41,7 +35,7 @@ These instructions assume that you already have Zen Cart installed, configured a
 
 1. Extract the Installer archive to a temporary location.
 
-2.  Open the /includes folder and change the folder name "YOUR_TEMPLATE" to the name of your template folder.
+2.  Open the /includes/templates folder and change the folder name "YOUR_TEMPLATE" to the name of your template folder.
 
 3. Copy the includes folder to the root of your site where the includes folder is located. NOTE: no files are overwritten.
 
@@ -85,7 +79,7 @@ Password for the test gateway are NOT the same as the Merchant ID and Password f
 Merchant Account. Please contact your SecurePay Payment Gateway Reseller or SecurePay Support if 
 you need a test Merchant ID and Transaction password.
 
-When processing transactions, if the transaction is would otherwise give a 000 "Approved" response
+When processing transactions, if the transaction would otherwise give a 000 "Approved" response
 code, the Test gateway will return the cents portion of the transaction amount as the response code
 (i.e. a transaction amount of $1.05 will result in a "(05): Do Not Honour" response).
 
@@ -99,4 +93,4 @@ Please visit the SecurePay website (http://www.securepay.com.au/) for  support c
 SecurePay Documentation
 =======================
 See https://auspost.com.au/payments/docs/securepay/?javascript#other-integration-methods and select XML API Integration to download the latest guide.
-As at 03/ April 2022 Ver 1.6 2021 was the most recent guide.
+As at 03 April 2022 Ver 1.6 2021 was the most recent guide.

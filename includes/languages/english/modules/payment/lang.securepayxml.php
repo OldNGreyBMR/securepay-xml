@@ -1,9 +1,11 @@
 <?php
 /**
  * @package securepayxml_payment_module
-  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
+ * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
  * @version $Id: securepayxml.php 2022-08-22  BMH
- // BMH 2022-08-20 modify for zc158
+ * BMH 2022-08-20 modify for zc158
+ * // BMH 2025-02-15 modify for zc210 (!defined('MODULE_PAYMENT_SECUREPAYXML_STATUS')
+ * //     2025-03-08  MODULE_PAYMENT_SECUREPAYXML_TEXT_REFUND_CONFIRM_ERROR
  */
  
  $define = [
@@ -48,6 +50,7 @@
     'MODULE_PAYMENT_SECUREPAYXML_ENTRY_REFUND_AMOUNT_TEXT' => 'Amount:',
     'MODULE_PAYMENT_SECUREPAYXML_ENTRY_REFUND_BUTTON_TEXT' => 'Refund',
     'MODULE_PAYMENT_SECUREPAYXML_TEXT_REFUND' => 'Refunded $%s, on order %s with transaction id %s',
+    'MODULE_PAYMENT_SECUREPAYXML_TEXT_REFUND_CONFIRM_ERROR' => '',
     
     'MODULE_PAYMENT_SECUREPAYXML_ENTRY_PREAUTH_TITLE' => '<b>Complete preauthorised transaction</b>',
     'MODULE_PAYMENT_SECUREPAYXML_ENTRY_PREAUTH_AMOUNT_TEXT' => 'Amount: ',
@@ -64,6 +67,17 @@
   if (defined('MODULE_PAYMENT_SECUREPAYXML_STATUS') && MODULE_PAYMENT_SECUREPAYXML_STATUS == 'True') {
     define('MODULE_PAYMENT_SECUREPAYXML_TEXT_DESCRIPTION', '');
   } 
+  if (!defined('MODULE_PAYMENT_SECUREPAYXML_STATUS')) {
+      define('MODULE_PAYMENT_SECUREPAYXML_STATUS', '');
+      define('MODULE_PAYMENT_SECUREPAYXML_SORT_ORDER', '');
+      define('MODULE_PAYMENT_SECUREPAYXML_TEST', '');
+      define('MODULE_PAYMENT_SECUREPAYXML_ORDER_STATUS_ID', '');
+      define('MODULE_PAYMENT_SECUREPAYXML_MODE', '');
+      define('MODULE_PAYMENT_SECUREPAYXML_ZONE', '');
+     // define('MODULE_PAYMENT_SECUREPAYXML_SORT_ORDER', '');
+      //define('MODULE_PAYMENT_SECUREPAYXML_SORT_ORDER', '');
+      //define('MODULE_PAYMENT_SECUREPAYXML_SORT_ORDER', '');
+  }      //BMH 2025-02-15 for uninstall
   
   return $define;
   
