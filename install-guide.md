@@ -35,7 +35,7 @@ These instructions assume that you already have Zen Cart installed, configured a
 
 1. Extract the Installer archive to a temporary location.
 
-2.  Open the /includes/templates folder and change the folder name "YOUR_TEMPLATE" to the name of your template folder.
+2.  Open the /includes folder and change the folder name "YOUR_TEMPLATE" to the name of your template folder.
 
 3. Copy the includes folder to the root of your site where the includes folder is located. NOTE: no files are overwritten.
 

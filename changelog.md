@@ -1,10 +1,6 @@
 Change Log
-securepay xml V158
-====================
-Changes for Version 158
------------------------
-Compatible with Zen Cart 2.1.0 and PHP 8.0 to 8.4
-
+securepay xml V156
+============
 Changes for Version 156
 -----------------------
 1. /includes/modules/payments/includes/modules/payments/securepayxml.php and 

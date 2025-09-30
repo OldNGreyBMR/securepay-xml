@@ -5,16 +5,14 @@
  *
  * Contains a class for sending transaction requests to SecurePay,
  * and receiving responses from the SecurePay via the XML API
- *
+ * 
  * This class requires cURL to be available to PHP
  *
  * @author Andrew Dubbeld (support@securepay.com.au)
  * @date 19-Oct-2009
- */
-// BMH 2019 debugging
+ */ 
+// BMH 2019 debugging 
 //					line  remove append code [being added in all cases ]
-// BMH 2022-12-11 ln1306 implode(): Argument #2 ($array) must be of type ?array, string given
-// BMH 2024-08-20 ln1312 implode(): Argument #2 ($array) must be of type ?array, string given ;PHP 8+
 
 /* Modes */
 define( 'SECUREPAY_GATEWAY_MODE_TEST',			 1);
@@ -103,19 +101,19 @@ class securepay_xml_transaction
 	private $gatewayURL, $merchantID, $merchantPW;
 	private $responseArray = array();
 	private $txnType = 0;
-
+	
 	private $ccNumber, $ccVerify, $ccExpiryMonth, $ccExpiryYear;
-
+	
 	private $accNumber, $accBSB, $accName;
-
+	
 	private $txnReference, $amount;
-
+	
 	private $currency=SECUREPAY_CURRENCY_DEFAULT;
-
+	
 	private $requestType, $periodicType, $periodicInterval;
-
+	
 	private $bankTxnID = 0;
-
+	
 	//fraudguard
 	private $fraudGuard = 0;
 	private $fgFirstName = "";
@@ -126,14 +124,14 @@ class securepay_xml_transaction
 	private $fgCountryD = "";
 	private $fgEmail = "";
 	private $fgIP = "";
-
+	
 	//Support Identifier. re: Richard
 	private $identifier="";
 
 	/**
 	 * __construct
 	 *
-	 * @param integer $gatewaymode
+	 * @param integer $gatewaymode 
 	 * @param string $setup_merchantID
 	 * @param string $setup_merchantPW
 	 *
@@ -154,7 +152,7 @@ class securepay_xml_transaction
 			case SECUREPAY_GATEWAY_MODE_PERIODIC_TEST:
 				$this->gatewayURL = SECUREPAY_URL_PERIODIC_TEST;
 				break;
-
+				
 			case SECUREPAY_GATEWAY_MODE_PERIODIC_LIVE:
 				$this->gatewayURL = SECUREPAY_URL_PERIODIC_LIVE;
 				break;
@@ -170,9 +168,9 @@ class securepay_xml_transaction
 				$this->gatewayObjectValid = false;
 				return;
 		}
-
+		
 		$this->setIdentifier($identifier);
-
+		
 		if ( strlen( $setup_merchantID ) == 0 || strlen( $setup_merchantPW ) == 0 )
 		{
 			$this->gatewayObjectValid = false;
@@ -187,7 +185,7 @@ class securepay_xml_transaction
 
 	/**
 	 * reset
-	 *
+	 * 
 	 * Clears response variables, preventing mismatched results in certain failure cases.
 	 * This is called before each transaction, so be sure to check these values between transactions.
 	 */
@@ -198,11 +196,11 @@ class securepay_xml_transaction
 		$this->bankTxnID = 0;
 		$this->txnType = 0;
 	}
-
+	
 	public function isGatewayObjectValid() { return $this->gatewayObjectValid; }
 
 	public function getAmount() { return $this->amount; }
-
+	
 	/**
 	 * setAmount
 	 *
@@ -222,40 +220,40 @@ class securepay_xml_transaction
 		}
 		return;
 	}
-
+	
 	public function getCurrency() { return $this->currency; }
 	public function setCurrency($cur) { $this->currency = $cur; }
-
+	
 	public function getTxnReference() { return $this->txnReference; }
 	public function setTxnReference($ref) { $this->txnReference = $ref; }
 
 	public function getTxnType() { return $this->txnType; }
 	public function setTxnType($type) { $this->txnType = $type; }
-
+	
 	public function getPreauthID() { return $this->preauthID; }
 	public function setPreauthID($id) { $this->preauthID = $id; }
-
+	
 	public function getAccBSB() { return $this->accBSB; }
 	public function setAccBSB($bsb) { $this->accBSB = $bsb; }
-
+	
 	public function getAccNumber() { return $this->accNumber; }
 	public function setAccNumber($Number) { $this->accNumber = $Number; }
 
 	public function getAccName() { return $this->accName; }
 	public function setAccName($name) { $this->accName = $name; }
-
+	
 	public function getCCNumber() { return $this->ccNumber; }
 	public function setCCNumber($ccNumber) { $this->ccNumber = $ccNumber; }
-
+	
 	public function getCCVerify() { return $this->ccVerify; }
-	public function setCCVerify($ver) { $this->ccVerify = $ver; }
+	public function setCCVerify($ver) { $this->ccVerify = $ver; }	
 
 	/* @return string month MM*/
 	public function getCCExpiryMonth() { return $this->ccExpiryMonth; }
-
+	
 	/* @return string year YY*/
 	public function getCCExpiryYear() { return $this->ccExpiryYear; }
-
+	
 	/* @param string/int month MM or month M - If there are leading zeros, type needs to be string*/
 	public function setCCExpiryMonth($month)
 	{
@@ -268,10 +266,10 @@ class securepay_xml_transaction
 		{
 			$this->ccExpiryMonth = $month;
 		}
-
+		
 		return;
 	}
-
+	
 	/* @param string/int year YY or year Y or year YYYY - If there are leading zeros, type needs to be string*/
 	public function setCCExpiryYear($year)
 	{
@@ -302,7 +300,7 @@ class securepay_xml_transaction
 		$this->setCCNumber("0");
 		return $t;
 	}
-
+	
 	public function getClearCCVerify()
 	{
 		$t = $this->getCCVerify();
@@ -312,24 +310,24 @@ class securepay_xml_transaction
 
 	public function getMerchantID() { return $this->merchantID; }
 	public function setMerchantID($id) { $this->merchantID = $id; }
-
+	
 	public function getMerchantPW () { return $this->merchantPW; }
 	public function setMerchantPW ($pw) { $this->merchantPW = $pw; }
-
+	
 	public function getBankTxnID () { return $this->bankTxnID; }
 	public function setBankTxnID ($id) { $this->bankTxnID = $id; }
-
+	
 	public function getRequestType () { return $this->requestType; }
 	public function setRequestType ($t) { $this->requestType = $t; }
-
+	
 	public function getPeriodicType () { return $this->periodicType; }
 	public function setPeriodicType ($t) { $this->periodicType = $t; }
-
+	
 	public function getPeriodicInterval () { return $this->periodicInterval; }
 	public function setPeriodicInterval ($t) { $this->periodicInterval = $t; }
-
+	
 	public function getErrorString () { return $this->errorString; }
-
+	
 	public function getResultArray () { return $this->responseArray; }
 
 	public function getResultByKeyName ( $keyName)
@@ -340,24 +338,24 @@ class securepay_xml_transaction
 		}
 		return false;
 	}
-
+	
 	public function getTxnWasSuccesful()
 	{
-		if (array_key_exists( "txnResult", $this->responseArray) === true
+		if (array_key_exists( "txnResult", $this->responseArray) === true 
 			&& 	$this->responseArray["txnResult"] === true )
 		{
 			return true;
 		}
 		return false;
 	}
-
+	
 	public function setAuth($id, $pw)
 	{
 		$this->setMerchantID($id);
 		$this->setMerchantPW($pw);
 		return;
 	}
-
+	
 	public function setFraudGuard($val)
 	{
 		if($val)
@@ -368,12 +366,12 @@ class securepay_xml_transaction
 		{
 			$this->fraudGuard = 0;
 		}
-
+		
 		return;
 	}
-
+	
 	public function isFraudGuard() { return $this->fraudGuard; }
-
+	
 	public function setFirstName($i) { $this->fgFirstName = $i; }
 	public function getFirstName() { return $this->fgFirstName; }
 
@@ -382,22 +380,22 @@ class securepay_xml_transaction
 
 	public function setPostCode($i) { $this->fgPostCode = $i; }
 	public function getPostCode() { return $this->fgPostCode; }
-
+	
 	public function setTown($i) { $this->fgTown = $i; }
 	public function getTown() { return $this->fgTown; }
-
+	
 	public function setCountryB($i) { $this->fgCountryB = $i; }
 	public function getCountryB() { return $this->fgCountryB; }
-
+	
 	public function setCountryD($i) { $this->fgCountryD = $i; }
 	public function getCountryD() { return $this->fgCountryD; }
-
+	
 	public function setEmail($i) { $this->fgEmail = $i; }
 	public function getEmail() { return $this->fgEmail; }
-
+	
 	public function setIP($i) { $this->fgIP = $i; }
 	public function getIP() { return $this->fgIP; }
-
+	
 	public function getFraudGuardCode()
 	{
 		if (array_key_exists("fraudGuardCode", $this->responseArray) === true)
@@ -431,7 +429,7 @@ class securepay_xml_transaction
 		$this->setCountryD("");
 		$this->setEmail("");
 		$this->setIP("");
-
+		
 		return;
 	}
 
@@ -446,7 +444,7 @@ class securepay_xml_transaction
 		$this->setCountryD($country_delivery);
 		$this->setEmail($email);
 		$this->setIP($ip);
-
+		
 		return;
 	}
 
@@ -468,19 +466,19 @@ class securepay_xml_transaction
 	public function processCreditStandard($amount, $txnReference, $cardNumber, $cardMonth, $cardYear, $cardVerify=0, $currency=SECUREPAY_CURRENCY_DEFAULT)
 	{
 		$this->reset();
-
+		
 		if(!$this->getTxnType()) //So that we can simplify fraudguard payments
 		{
 			$this->setTxnType(SECUREPAY_TXN_STANDARD);
 		}
-
+			
 		if($currency)
 		{
-			$this->setCurrency($currency);
+			$this->setCurrency($currency);		
 		}
-
+		
 		$this->setAmount($amount);
-
+		
 		$this->setTxnReference($txnReference);
 		$this->setCCNumber($cardNumber);
 		if($cardVerify == true && strlen($cardVerify)!=0)
@@ -489,7 +487,7 @@ class securepay_xml_transaction
 		}
 		$this->setCCExpiryYear($cardYear);
 		$this->setCCExpiryMonth($cardMonth);
-
+		
 		if($this->processTransaction())
 		{
 			if(array_key_exists('banktxnID',$this->responseArray))
@@ -516,12 +514,12 @@ class securepay_xml_transaction
 		$this->reset();
 
 		$this->setTxnType(SECUREPAY_TXN_REFUND);
-
+		
 		$this->setAmount($amount);
 		$this->setTxnReference($txnReference);
-
+		
 		$this->setBankTxnID($txnID);
-
+		
 		if($this->processTransaction())
 		{
 			if(array_key_exists('banktxnID',$this->responseArray))
@@ -546,14 +544,14 @@ class securepay_xml_transaction
 	public function processCreditReverse($amount, $txnReference, $txnID)
 	{
 		$this->reset();
-
+		
 		$this->setTxnType(SECUREPAY_TXN_REVERSE);
-
+		
 		$this->setAmount($amount);
 		$this->setTxnReference($txnReference);
-
+		
 		$this->setBankTxnID($txnID);
-
+		
 		if($this->processTransaction())
 		{
 			if(array_key_exists('banktxnID',$this->responseArray))
@@ -566,9 +564,9 @@ class securepay_xml_transaction
 
 	/**
 	 * processCreditPreauth:
-	 *
+	 * 
 	 * Preauthorise a credit card payment
-	 *
+	 * 
 	 * @param float amount - Numeric and decimal only: no thousand separators
 	 * @param string txnReference - Merchant's unique transaction ID
 	 * @param int cardNumber - 12-18 digit credit-card number
@@ -576,15 +574,15 @@ class securepay_xml_transaction
 	 * @param int cardYear - 2 or 4 digit year
 	 * @param int cardVerify - 3 or 4 digit CVV (optional)
 	 * @param string currency - Exactly three characters. See SecurePay documentation for list of valid currencies. (optional)
-	 *
+	 * 
 	 * @return string preauthID - preauthorisation ID (use to execute transaction later (processCreditAdvice)), or FALSE (check $this->getErrorText() afterwards).
 	 */
 	public function processCreditPreauth($amount, $txnReference, $cardNumber, $cardMonth, $cardYear, $cardVerify=0, $currency=SECUREPAY_CURRENCY_DEFAULT)
 	{
 		$this->reset();
-
+		
 		$this->setTxnType(SECUREPAY_TXN_PREAUTH);
-
+		
 		if($currency)
 		{
 			$this->setCurrency($currency);
@@ -599,7 +597,7 @@ class securepay_xml_transaction
 		}
 		$this->setCCExpiryYear($cardYear);
 		$this->setCCExpiryMonth($cardMonth);
-
+		
 		if($this->processTransaction())
 		{
 			if(array_key_exists('preauthID',$this->responseArray))
@@ -624,13 +622,13 @@ class securepay_xml_transaction
 	public function processCreditAdvice($amount, $txnReference, $preauthID)
 	{
 		$this->reset();
-
+		
 		$this->setTxnType(SECUREPAY_TXN_ADVICE);
-
+		
 		$this->setAmount($amount);
 		$this->setTxnReference($txnReference);
 		$this->setPreauthID($preauthID);
-
+		
 		if($this->processTransaction())
 		{
 			if(array_key_exists('banktxnID',$this->responseArray))
@@ -640,7 +638,7 @@ class securepay_xml_transaction
 		}
 		return false;
 	}
-
+	
 	//Not used/tested yet
 	/**
 	 * processDirectCredit:
@@ -658,7 +656,7 @@ class securepay_xml_transaction
 	public function processDirectCredit($amount, $txnReference, $accName, $accBSB, $accNumber)
 	{
 		$this->reset();
-
+		
 		$this->setTxnType(SECUREPAY_TXN_DIRECTCREDIT);
 
 		$this->setAmount($amount);
@@ -676,13 +674,13 @@ class securepay_xml_transaction
 		}
 		return false;
 	}
-
+	
 	//Not used/tested yet
 	/**
 	 * processDirectDebit:
-	 *
+	 * 
 	 * Execute a Direct Entry/Debit transaction
-	 *
+	 * 
 	 * @param float amount - Numeric and decimal only: no thousand separators. Should be same as preauthorised amount.
 	 * @param string txnReference - Merchant's unique transaction ID: must be same as in initial transaction
 	 * @param string accName - Account name
@@ -701,7 +699,7 @@ class securepay_xml_transaction
 		$this->setAccName($accName);
 		$this->setAccNumber($accNumber);
 		$this->setAccBSB($accBSB);
-
+		
 		if($this->processTransaction())
 		{
 			if(array_key_exists('banktxnID',$this->responseArray))
@@ -711,7 +709,7 @@ class securepay_xml_transaction
 		}
 		return false;
 	}
-
+	
 	//Not used/tested yet
 	/**
 	 * processFraudGuard:
@@ -734,10 +732,10 @@ class securepay_xml_transaction
 	{
 		$this->reset();
 		$this->setTxnType(SECUREPAY_TXN_ANTIFRAUD_PAY);
-
+		
 		return $this->processCreditStandard($amount, $txnReference, $cardNumber, $cardMonth, $cardYear, $cardVerify, $currency);
 	}
-
+	
 	//Not used/tested yet
 	/**
 	 * processFraudGuardCheck:
@@ -760,15 +758,15 @@ class securepay_xml_transaction
 	{
 		$this->reset();
 		$this->setTxnType(SECUREPAY_TXN_ANTIFRAUD_CHECK);
-
+		
 		return $this->processCreditStandard($amount, $txnReference, $cardNumber, $cardMonth, $cardYear, $cardVerify, $currency);
 	}
-
+	
 	/**
 	 * processTransaction:
 	 *
 	 * Attempts to process the transaction using the supplied details
-	 *
+	 * 
 	 * @return boolean Returns true for succesful (approved) transaction / false for failure (declined) or error
 	 */
 	private function processTransaction ()
@@ -808,11 +806,11 @@ class securepay_xml_transaction
 		$requestMessage = $this->createXMLTransactionRequestString();
 		//Send request
 		$response = $this->sendRequest( $this->gatewayURL, $requestMessage );
-
+                
 		unset($requestMessage);
-
+		
 		$this->responseArray["raw-response"] = htmlentities($response);
-
+		
 		if ( $response === false )
 		{
 			if ( strlen( $this->errorString ) == 0 )
@@ -843,7 +841,7 @@ class securepay_xml_transaction
 	 * checkCCParameters
 	 *
 	 * Check the input parameters are valid for a credit card transaction
-	 *
+	 * 
 	 * @return boolean Return TRUE for all checks passed OK, or FALSE if an error is detected
 	 */
 	private function checkCCParameters()
@@ -856,7 +854,7 @@ class securepay_xml_transaction
 			$this->errorString = self::GATEWAY_ERROR_INVALID_CCNUMBER;
 			return false;
 		}
-
+		
 		// the string $ccExpiryMonth must be all numeric with value between 1 and 12
 		if (preg_match("/\D/", $this->getCCExpiryMonth()) ||
 			(int) $this->getCCExpiryMonth() < 1 ||
@@ -875,7 +873,7 @@ class securepay_xml_transaction
 			$this->errorString = self::GATEWAY_ERROR_INVALID_CCEXPIRY;
 			return false;
 		}
-
+		
 		// The CVV is optional
 		if ($this->getCCVerify() != false)
 		{
@@ -898,7 +896,7 @@ class securepay_xml_transaction
 	 * checkDirectParameters
 	 *
 	 * Check the input parameters are valid for a direct entry transaction
-	 *
+	 * 
 	 * @return boolean Return TRUE for all checks passed OK, or FALSE if an error is detected
 	 */
 	private function checkDirectParameters()
@@ -909,7 +907,7 @@ class securepay_xml_transaction
 			$this->errorString = self::GATEWAY_ERROR_INVALID_ACCOUNTNUMBER;
 			return false;
 		}
-
+		
 		if (!preg_match( "/[a-zA-Z0-9 _]+/", $this->getAccName() )) // REGEXP: Match alpha-numeric characters + space, underscore
 		{
 			$this->errorString = self::GATEWAY_ERROR_INVALID_ACCOUNTNAME;
@@ -921,7 +919,7 @@ class securepay_xml_transaction
 			$this->errorString = self::GATEWAY_ERROR_INVALID_BSB;
 			return false;
 		}
-
+		
 		return true;
 	}
 
@@ -943,7 +941,7 @@ class securepay_xml_transaction
 			$this->errorString = self::GATEWAY_ERROR_INVALID_TXN_AMT;
 			return false;
 		}
-
+		
 		$ref = $this->getTxnReference();
 		if ( $this->getTxnType()==SECUREPAY_TXN_DIRECTDEBIT ||
 			 $this->getTxnType()==SECUREPAY_TXN_DIRECTCREDIT )
@@ -965,10 +963,10 @@ class securepay_xml_transaction
 				$this->errorString = self::GATEWAY_ERROR_INVALID_REF_ID;
 				return false;
 			}
-		}
+		}	
 		return true;
 	}
-
+	
     /**
 	 * createXMLTransactionRequestString:
 	 * Creates the XML request string for a transaction request message. Destroys CC/CCV values.
@@ -1012,7 +1010,7 @@ class securepay_xml_transaction
          }else{
         // BMH remove time stamp from transaction id $x .=		"<purchaseOrderNo>".htmlentities($appenNumber.$this->getTxnReference().'-'.time())."</purchaseOrderNo>";
          $x .=		"<purchaseOrderNo>".htmlentities($this->getTxnReference())."</purchaseOrderNo>";
-      // BMH eoc
+      // BMH eoc  
         }
 		if(	$this->getTxnType()==SECUREPAY_TXN_ADVICE)
 		{
@@ -1024,7 +1022,7 @@ class securepay_xml_transaction
 		{
 			$x .=		"<txnID>".htmlentities($this->getBankTxnID())."</txnID>";
 		}
-
+		
 		if(	$this->getTxnType()==SECUREPAY_TXN_STANDARD	||
 			$this->getTxnType()==SECUREPAY_TXN_PREAUTH )
 		{
@@ -1044,7 +1042,7 @@ class securepay_xml_transaction
 							"<bsbNumber>".htmlentities($this->getAccBSB())."</bsbNumber>".
 							"<accountNumber>".htmlentities($this->getAccNumber())."</accountNumber>".
 							"<accountName>".htmlentities($this->getAccName())."</accountName>".
-						"</DirectEntryInfo>";
+						"</DirectEntryInfo>";							
 		}
 		if ($this->isFraudGuard())
 		{
@@ -1067,14 +1065,14 @@ class securepay_xml_transaction
 	$x .=	"<identifier>".htmlentities($this->getIdentifier())."</identifier>";
 		}
 $x .=	"</SecurePayMessage>";
-
+		
 		return $x;
 	}
 
 
 	/**
 	 * getGMTTimeStamp:
-	 *
+	 * 
 	 * this function creates a timestamp formatted as per requirement in the
 	 * SecureXML documentation
 	 *
@@ -1093,7 +1091,7 @@ $x .=	"</SecurePayMessage>";
 			000 is a Static 0 characters, as SecurePay does not store nanoseconds
 			sOOO is a Time zone offset, where s is �+� or �-�, and OOO = minutes, from GMT.
 		*/
-
+		
 		$val = date("Z") / 60;
 		if ($val >= 0)
 		{
@@ -1104,13 +1102,13 @@ $x .=	"</SecurePayMessage>";
 
 		return $stamp;
 	}
-
+        
         /**
-     * sendRequest:
+     * sendRequest: 
      * uses cURL to open a Secure Socket connection to the gateway,
      * sends the transaction request and then returns the response
      * data
-     *
+     * 
      * @param $postURL The URL of the remote gateway to which the request is sent
      * @param $requestMessage
      */
@@ -1126,14 +1124,14 @@ $x .=	"</SecurePayMessage>";
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $requestMessage); // add the request message itself
         //curl_setopt($ch, CURLOPT_POSTFIELDS, "xmlRequest=" . $requestMessage);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-type: text/xml;charset=UTF-8', 'Content-length: ' .
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-type: text/xml;charset=UTF-8', 'Content-length: ' . 
 
 strlen($requestMessage)));
 
         $result = curl_exec($ch);
 
         $debugoutput = curl_getinfo($ch);
-        $curl_error_message = curl_error($ch); // must retrieve an error message (if any) before closing the curl object
+        $curl_error_message = curl_error($ch); // must retrieve an error message (if any) before closing the curl object 
 
         curl_close($ch);
 
@@ -1150,10 +1148,10 @@ strlen($requestMessage)));
     }
 
 	/**
-	 * processTransactionResponseMessageIntoResponseArray:
-	 * converts the response XML message into a nested array structure and then
-	 * pulls out the relevant data into a simplified result array
-	 *
+	 * processTransactionResponseMessageIntoResponseArray: 
+	 * converts the response XML message into a nested array structure and then 
+	 * pulls out the relevant data into a simplified result array 
+	 * 
 	 * @param string $responseMessage - An XML response from the gateway
 	 * @return boolean True to indicate succesful decoding of response message AND succesful txn result, false to indicate an error or declined result
 	 */
@@ -1175,11 +1173,11 @@ strlen($requestMessage)));
 
 		$statusCode = trim( $xmlres['SecurePayMessage']['Status']['statusCode'] );
 		$statusDescription = trim($xmlres['SecurePayMessage']['Status']['statusDescription']);
-
+	
 		$responseArray["statusCode"] = $statusCode;
 		$responseArray["statusDescription"] = $statusDescription;
 
-		// Three digit codes indicate a repsonse from the Securepay gateway (error detected by gateway)
+		// Three digit codes indicate a repsonse from the Securepay gateway (error detected by gateway) 
 		if ( strcmp( $statusCode, '000' ) != 0 )
 		{
 			$this->errorString = self::GATEWAY_ERROR_SECUREPAY_STATUS." : ".$statusCode." ".$statusDescription;
@@ -1199,18 +1197,18 @@ strlen($requestMessage)));
 		$responseArray["responseText"] = trim($xmlres['SecurePayMessage']['Payment']['TxnList']['Txn']['responseText']);
 		$responseArray["banktxnID"] = trim($xmlres['SecurePayMessage']['Payment']['TxnList']['Txn']['txnID']);
 		$responseArray["settlementDate"] = trim($xmlres['SecurePayMessage']['Payment']['TxnList']['Txn']['settlementDate']);
-
+		
 		if($this->isFraudGuard())
 		{
 			$responseArray["fraudGuardCode"] = trim($xmlres['SecurePayMessage']['Payment']['TxnList']['Txn']['antiFraudResponseCode']);
 			$responseArray["fraudGuardText"] = trim($xmlres['SecurePayMessage']['Payment']['TxnList']['Txn']['antiFraudResponseText']);
 		}
-
+		
 		if( $this->getTxnType()==SECUREPAY_TXN_PREAUTH && array_key_exists('preauthID',$xmlres['SecurePayMessage']['Payment']['TxnList']['Txn']))
 		{
 			$responseArray["preauthID"] = trim($xmlres['SecurePayMessage']['Payment']['TxnList']['Txn']['preauthID']);
 		}
-
+		
 		if($this->getRequestType() == SECUREPAY_REQ_PERIODIC)
 		{
 			if(	$this->getTxnType()==SECUREPAY_TXN_STANDARD	||
@@ -1233,7 +1231,7 @@ strlen($requestMessage)));
 			$responseArray["creditCardPAN"] = trim($xmlres['SecurePayMessage']['Periodic']['PeriodicList']['PeriodicItem']['CreditCardInfo']['pan']);
 			$responseArray["expiryDate"] = trim($xmlres['SecurePayMessage']['Payment']['TxnList']['Txn']['CreditCardInfo']['expiryDate']);
 		}
-
+		
 		$this->responseArray = $responseArray;
 
 		/* field "successful" = "Yes" means "triggered transaction successfully registered", anything else is failure */
@@ -1242,7 +1240,7 @@ strlen($requestMessage)));
 			"08" is Honor with ID (approved) and
 			"77" is Approved (ANZ only).
 			Any other 2 digit code is a decline or error from the bank. */
-
+			
 		if ((strcasecmp( $responseArray["approved"], "Yes" ) == 0) &&
 			(strcmp( $responseArray["responseCode"], "00" ) === 0 ||
 			 strcmp( $responseArray["responseCode"], "08" ) === 0 ||
@@ -1259,11 +1257,11 @@ strlen($requestMessage)));
 
 
 	/**
-	 * convertXMLToNestedArray:
-	 * converts an XML document into a nested array structure
-	 *
+	 * convertXMLToNestedArray: 
+	 * converts an XML document into a nested array structure 
+	 * 
 	 * @param string $XMLDocument An XML document
-	 * @return boolean True to indicate succesful conversion of document, false to indicate an error
+	 * @return boolean True to indicate succesful conversion of document, false to indicate an error 
 	 */
 	private function convertXMLToNestedArray ( $XMLDocument )
 	{
@@ -1284,7 +1282,7 @@ strlen($requestMessage)));
 
 			return false;
 		}
-
+	
 		xml_parser_free($parser);
 
 		$hash_stack = array();
@@ -1305,20 +1303,18 @@ strlen($requestMessage)));
 					array_push($hash_stack, $val['tag']);
 					if ( array_key_exists('value', $val) )
 					{
-					//	eval("\$output['" . implode($hash_stack, "']['") . "'] = \"{$val['value']}\";"); // BMH
-                    eval("\$output['" . implode( "']['",$hash_stack) . "'] = \"{$val['value']}\";");
+						eval("\$output['" . implode($hash_stack, "']['") . "'] = \"{$val['value']}\";");
 					}
 					else // to handle empty self closing tags i.e. <paymentInterval/>
 					{
-						//eval("\$output['" . implode($hash_stack, "']['") . "'] = null;"); // BMH
-                        eval("\$output['" . implode( "']['",$hash_stack) . "'] = null;");
+						eval("\$output['" . implode($hash_stack, "']['") . "'] = null;");
 					}
 					array_pop($hash_stack);
 					break;
 			}
 		}
 		return $output;
-	}
+	}	
 }
 
 ?>
