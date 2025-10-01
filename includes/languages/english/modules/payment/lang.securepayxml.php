@@ -2,7 +2,7 @@
 /**
  * @package securepayxml_payment_module
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @version $Id: securepayxml.php 2022-08-22  BMH
+ * @version $Id: securepayxml.php 2025-07-20  BMH
  * BMH 2022-08-20 modify for zc158
  * // BMH 2025-02-15 modify for zc210 (!defined('MODULE_PAYMENT_SECUREPAYXML_STATUS')
  * //     2025-03-08  MODULE_PAYMENT_SECUREPAYXML_TEXT_REFUND_CONFIRM_ERROR
@@ -11,7 +11,7 @@
  $define = [
     'MODULE_PAYMENT_SECUREPAYXML_TEXT_ADMIN_TITLE' => 'SecurePay XML API (AU)',
     'MODULE_PAYMENT_SECUREPAYXML_TEXT_CATALOG_TITLE' => 'Credit Card',
-    'MODULE_PAYMENT_SECUREPAYXML_TEXT_DESCRIPTION' => '<b>SecurePay XML API (AU)</b><br />Receive credit-card payments via the SecurePay Gateway<br /><br />Configuration Instructions<br />1. Click "Install"<br />2. Enter your SecurePay merchant id and password (obtained from SecurePay support)<br /><br /><hr />Requirements:<hr /><br />PHP cURL<br />A <a href="http://securepay.com.au">SecurePay</a> merchant account.',
+    'MODULE_PAYMENT_SECUREPAYXML_TEXT_DESCRIPTION' => '<b>SecurePay XML API (AU)</b><br>Receive credit-card payments via the SecurePay Gateway<br>Configuration Instructions<br>1. Click "Install"<br>2. Enter your SecurePay merchant id and password (obtained from SecurePay support)<br><br><b>Requirements:</b><br>PHP cURL<br>A <a href="http://securepay.com.au">SecurePay</a> merchant account.',
     'MODULE_PAYMENT_SECUREPAYXML_MODE_PREAUTH' =>'Preauth/Advice',
     'MODULE_PAYMENT_SECUREPAYXML_MODE_STANDARD' =>'Standard Payment',
     
@@ -64,9 +64,10 @@
     'MODULE_PAYMENT_SECUREPAYXML_TEXT_VOID' => 'Reversed order: %s with transaction: %s.',
     ];
 
-  if (defined('MODULE_PAYMENT_SECUREPAYXML_STATUS') && MODULE_PAYMENT_SECUREPAYXML_STATUS == 'True') {
+  /* if (defined('MODULE_PAYMENT_SECUREPAYXML_STATUS') && MODULE_PAYMENT_SECUREPAYXML_STATUS == 'True') {
     define('MODULE_PAYMENT_SECUREPAYXML_TEXT_DESCRIPTION', '');
   } 
+    */
   if (!defined('MODULE_PAYMENT_SECUREPAYXML_STATUS')) {
       define('MODULE_PAYMENT_SECUREPAYXML_STATUS', '');
       define('MODULE_PAYMENT_SECUREPAYXML_SORT_ORDER', '');

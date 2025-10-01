@@ -1,17 +1,22 @@
 Change Log
-securepay xml V158
-====================
-Changes for Version 158
+securepay xml V159
+==================
+Changes for Version 159
 -----------------------
-Compatible with Zen Cart 2.1.0 and PHP 8.0 to 8.4
+reformat; PHP8.4 compliant; Zen Cart V2.1.0 compliant
+add version number id Admin console; improve instructions
 
-Changes for Version 156
+Changes for Version 159
 -----------------------
-1. /includes/modules/payments/includes/modules/payments/securepayxml.php and 
+1. change log file output
+2. strftime deprecated so replace with date() 
+3. declare all vars
+4. increase size of banktxnid from varchar(7) to varchar(16) in SQL create table and head field name change in XML
+5. add random suffix to transaction id to ensure uniqueness
+1 /includes/modules/payments/includes/modules/payments/securepayxml.php and 
   /includes/modules/payments/includes/modules/payments/securepay_xml_api.php modified to only pass invoice enumber as txnid
-2. new template file added /includes/templates/YOUR_TEMPLATE/templates/tpl_checkout_payment_default.php
-3. icon changed to /images/icons/securepay_logo_rgb.png webp version is also included
-4. icon size styled in added css file /includes/templates/YOUR_TEMPLATE/css/stylesheet_securepay_overide.css
-5. SecurePay logos displayed on checkout page
-6. Constants defined
-7. updated for PHP 7.4
+2 new template file added /includes/templates/YOUR_TEMPLATE/templates/tpl_checkout_payment_default.php
+3 icon changed to /images/icons/securepay_logo_rgb.png webp version is also included
+4 icon size styled in added css file /includes/templates/YOUR_TEMPLATE/css/stylesheet_securepay_overide.css
+5 SecurePay logos displayed on checkout page
+6 updated for PHP 8.4

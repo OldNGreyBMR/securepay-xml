@@ -15,7 +15,8 @@
 //					line  remove append code [being added in all cases ]
 // BMH 2022-12-11 ln1306 implode(): Argument #2 ($array) must be of type ?array, string given
 // BMH 2024-08-20 ln1312 implode(): Argument #2 ($array) must be of type ?array, string given ;PHP 8+
-
+// BMH  2025-09-29 add version number in comment to match securepayxml.php; 
+// Version 1.5.9
 /* Modes */
 define( 'SECUREPAY_GATEWAY_MODE_TEST',			 1);
 define( 'SECUREPAY_GATEWAY_MODE_LIVE',			 2);
@@ -91,6 +92,7 @@ class securepay_xml_transaction
 	const GATEWAY_ERROR_INVALID_ACCOUNTNUMBER = "Parameter Check failure: Invalid account number";
 	const GATEWAY_ERROR_INVALID_ACCOUNTNAME = "Parameter Check failure: Invalid account name";
 	const GATEWAY_ERROR_INVALID_ACCOUNTBSB = "Parameter Check failure: Invalid BSB";
+	const GATEWAY_ERROR_INVALID_BSB = "Parameter Check failure: Invalid BSB";
 	const GATEWAY_ERROR_RESPONSE_ERROR = "A general response error was detected";
 	const GATEWAY_ERROR_RESPONSE_INVALID = "A unspecified error was detected in the response content";
 	const GATEWAY_ERROR_XML_PARSE_FAILED = "The response message could not be parsed (invalid XML?)";
@@ -103,18 +105,30 @@ class securepay_xml_transaction
 	private $gatewayURL, $merchantID, $merchantPW;
 	private $responseArray = array();
 	private $txnType = 0;
+	public $customer_id;
 
-	private $ccNumber, $ccVerify, $ccExpiryMonth, $ccExpiryYear;
+    public $ccNumber; 
+    public $cc_month;
+    public $cc_year;
+    public $ccVerify;
+    public $ccExpiryMonth;
+    public $ccExpiryYear;
 
 	private $accNumber, $accBSB, $accName;
 
-	private $txnReference, $amount;
+	private $txnReference;
+    public $amount;
+	private $preauthID;
 
 	private $currency=SECUREPAY_CURRENCY_DEFAULT;
 
 	private $requestType, $periodicType, $periodicInterval;
 
 	private $bankTxnID = 0;
+    public $_logapiDir = DIR_FS_SQL_CACHE;
+  
+    public $purchaseOrderId; 
+    public $oid;
 
 	//fraudguard
 	private $fraudGuard = 0;
@@ -402,16 +416,20 @@ class securepay_xml_transaction
 	{
 		if (array_key_exists("fraudGuardCode", $this->responseArray) === true)
 		{
-			return $this->$responseArray["fraudGuardCode"];
+			// BMH 2025-09-29 return $this->$responseArray["fraudGuardCode"];
+            return $this->responseArray["fraudGuardCode"];
 		}
+		
 		return false;
 	}
 	public function getFraudGuardText()
 	{
 		if (array_key_exists("fraudGuardText", $this->responseArray) === true)
 		{
-			return $this->$responseArray["fraudGuardText"];
+			// BMH 2025-09-29 return $this->$responseArray["fraudGuardText"];
+            return $this->responseArray["fraudGuardText"];
 		}
+		
 		return false;
 	}
 
@@ -811,7 +829,8 @@ class securepay_xml_transaction
 
 		unset($requestMessage);
 
-		$this->responseArray["raw-response"] = htmlentities($response);
+		// BMH $this->responseArray["raw-response"] = htmlentities($response);
+        $this->responseArray["raw-response"] = htmlentities($response);
 
 		if ( $response === false )
 		{
@@ -821,6 +840,8 @@ class securepay_xml_transaction
 			}
 			return false;
 		}
+        // BMH DEBUG  $this->_logapi("ln843 " . $this->responseArray["raw-response"], 'securepay');  // BMH DEBUG 
+        // BMH  DEBUG $this->_logapi("ln845 " . print_r($response, true)) ; // BMH DEBUG 
 
 		//Process response for validity
 		if ( $this->processTransactionResponseMessageIntoResponseArray( $response ) === false )
@@ -838,12 +859,9 @@ class securepay_xml_transaction
 		return true;
 	}
 
-
 	/**
 	 * checkCCParameters
-	 *
 	 * Check the input parameters are valid for a credit card transaction
-	 *
 	 * @return boolean Return TRUE for all checks passed OK, or FALSE if an error is detected
 	 */
 	private function checkCCParameters()
@@ -925,7 +943,7 @@ class securepay_xml_transaction
 		return true;
 	}
 
-	/**
+	/* *
 	 * checkTxnParameters
 	 *
 	 * Check that the common values are within requirements
@@ -977,9 +995,9 @@ class securepay_xml_transaction
      */
 	private function createXMLTransactionRequestString()
 	{
-                $appenNumber = '';
-                if(SECUREPAY_GATEWAY_MODE_TEST){
-	// BMH DEBUG	echo 'BMH SECUREPAY_GATEWAY_MODE_TEST =' . SECUREPAY_GATEWAY_MODE_TEST . 'line 980 securepay_xml_api'; // BMH
+        $appenNumber = '';
+        if(SECUREPAY_GATEWAY_MODE_TEST){
+	        // BMH DEBUG	echo 'BMH SECUREPAY_GATEWAY_MODE_TEST =' . SECUREPAY_GATEWAY_MODE_TEST . 'line 980 securepay_xml_api'; // BMH
                   // BMH  $appenNumber =  '520-';
                 }
 		$x =
@@ -1002,9 +1020,7 @@ class securepay_xml_transaction
 						"<txnType>".htmlentities($this->getTxnType())."</txnType>".
 						"<txnSource>23</txnSource>". //23 is the XML API
 						"<amount>".htmlentities($this->getAmount())."</amount>";
-// BMH
-// echo 'BMH line 1004 var_dump x';
-// var_dump($x);
+
 // BMH boc
 			$x .=		"<currency>".htmlentities($this->getCurrency())."</currency>";
       if($this->getTxnType()==SECUREPAY_TXN_REFUND){
@@ -1071,7 +1087,6 @@ $x .=	"</SecurePayMessage>";
 		return $x;
 	}
 
-
 	/**
 	 * getGMTTimeStamp:
 	 *
@@ -1116,6 +1131,9 @@ $x .=	"</SecurePayMessage>";
      */
     private function sendRequest($postURL, $requestMessage) {
         $ch = curl_init();
+        global $oid;
+        //global $customer_id;
+        global $amount;
 
         // Set up curl parameters
         curl_setopt($ch, CURLOPT_URL, $postURL);   // set remote address
@@ -1128,7 +1146,7 @@ $x .=	"</SecurePayMessage>";
         //curl_setopt($ch, CURLOPT_POSTFIELDS, "xmlRequest=" . $requestMessage);
         curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-type: text/xml;charset=UTF-8', 'Content-length: ' .
 
-strlen($requestMessage)));
+        strlen($requestMessage)));
 
         $result = curl_exec($ch);
 
@@ -1145,7 +1163,11 @@ strlen($requestMessage)));
         // we do not need the header part of the response, trim it off the result
 
         $pos = strstr($result, "\n");
-        $result = substr($result, $pos);
+        // BMH $result = substr($result, $pos);
+         if ($pos !== false ) {
+            $result = substr($result, (int)$pos);
+        } // BMH 2025-09-27
+         
         return $result;
     }
 
@@ -1159,8 +1181,10 @@ strlen($requestMessage)));
 	 */
 	private function processTransactionResponseMessageIntoResponseArray ( $responseMessage )
 	{
+   
 		$xmlres = array();
 		$xmlres = $this->convertXMLToNestedArray( $responseMessage );
+        // BMH DEBUG   $this->_logapi('ln1192 $xmlres= <br> ' . print_r($xmlres,true) . ": $" . number_format(($this->amount/100),2) . " #" . $this->oid . " Cust:". $this->customer_id . " Exp:" . $this->cc_month . "/" . $this->cc_year); // BMH
 
 		if ( $xmlres === false )
 		{
@@ -1170,8 +1194,10 @@ strlen($requestMessage)));
 			}
 			return false;
 		}
+		
 
-		$responseArray["raw-XML-response"] = htmlentities($responseMessage);
+		// BMH $responseArray["raw-XML-response"] = htmlentities($responseMessage);
+        $responseArray["raw-response"] = htmlentities($responseMessage);
 
 		$statusCode = trim( $xmlres['SecurePayMessage']['Status']['statusCode'] );
 		$statusDescription = trim($xmlres['SecurePayMessage']['Status']['statusDescription']);
@@ -1319,6 +1345,22 @@ strlen($requestMessage)));
 		}
 		return $output;
 	}
-}
 
+
+
+    function _logapi($msg, $suffix = '')
+	{ 
+        global $purchaseOrderId;
+        //global $_logapiDir;
+
+		$file = $this->_logapiDir . '/' . 'Securepayxmlapi.log';
+		if ($fp = @fopen($file, 'a'))
+		{
+            $today = date("Y-m-d_H-i");         // BMH
+			@fwrite($fp, "".time().": ".$today . ": " .$msg . " " . $purchaseOrderId ."\r\n"); // stores epoch time + date
+            // BMH @fwrite($fp, "".time().": ".$msg); // stores time as epoch time
+			@fclose($fp);
+		}
+	}
+}
 ?>
