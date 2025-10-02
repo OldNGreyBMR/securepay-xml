@@ -1,9 +1,8 @@
 <?php
 /**
  * securepayxml.php
- *
+ * 
  * Implements the SecurePay XML API payment module for Zen Cart
- *
  * Contains the securepayxml class, which handles SecurePay XML API credit-card transactions via the securepay_xml_transaction class (securepay_xml_api.php).
  * The bulk of this class is a wrapper for securepay_xml_transaction, to interface with the Zen Cart way of doing things. It also sets up some text, menus and database entries.
  *
@@ -13,28 +12,21 @@
  * @copyright Copyright 2003-2007 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @copyright Portions Copyright 2003 Jason LeBaron
- *
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
+ * @updated 2025-10-02
+ * @amaintainedby OldNGrey (BMH) since 2017
  */
-// BMH 2019  to work with zc 156a
-//			line 26  Define constants; line 51
-//			line 33  add parameter $purchaseOrderId
-//			line 344 debugging
-//			line 401 debugging
-//			line 644
-// BMH 2020 to work with zc157a and PHP 7.4.9
-//		line 41 deprecated constructor
-// BMH 2024-10-20 ln 414 change log file output
-// BMH 2025-01-02 ln 216 ln 223 strftime deprecated so replace with date() 
+// Modifications
 // 2025-03-08 PHP8.3 & 8.4 declare all vars
 // 2025-09-29 increase size of banktxnid from varchar(7) to varchar(16) in SQL create table
 // 2025-09-30 add random suffix to transaction id to ensure uniqueness
+// 2025-10-02 159a ln391 use of $oid and $api_order_id to identify diff 
 
 
 // BMH @ini_set('error_reporting', E_STRICT);
 //declare(strict_types=1);
 if (!defined('VERSION_SECUREPAYXML')) {
-    define('VERSION_SECUREPAYXML', '1.5.9');
+    define('VERSION_SECUREPAYXML', '1.5.9a');
 }
 // BMH check which zc version and preload language files if required.
 // Language files may be required if this module is called directly eg from edit _orders
@@ -85,6 +77,7 @@ class securepayxml
 	public $zone; // Added to fix undefined property $zone error
 	public $code_debug; // Added to fix undefined property $code_debug error
 	private $_logDir = DIR_FS_SQL_CACHE;
+    private $_logtransDir = DIR_FS_SQL_CACHE;
 	private $mode = SECUREPAY_GATEWAY_MODE_TEST;
 	private $_check; // Added to fix undefined property $_check error
 
@@ -386,13 +379,16 @@ class securepayxml
 
 		// BMH 159 $amount = $order->info['total'];
         $amount = round($order->info['total'], 2); // BMH
-
+        
+        // Create an order ID
 		$last_order_id = $db->Execute("select orders_id from " . TABLE_ORDERS . " order by orders_id desc limit 1");
 		$new_order_id = $last_order_id->fields['orders_id'];
-		$oid = ($new_order_id + 1);
+		$new_order_id = ($new_order_id + 1);
+        $oid = ($new_order_id);
 
          // BMH 159 add randomized suffix to order id to produce uniqueness ... since it's unwise to submit the same order-number twice to the CC clearance system
-        $oid = (string)$oid . '-' . zen_create_random_value(3, 'chars');
+        // $oid = (string)$new_order_id . '-' . zen_create_random_value(3, 'chars');
+        $api_order_id = (string)$new_order_id . '-' . zen_create_random_value(3, 'chars'); // Ensure uniqueness
         
 		$type = SECUREPAY_TXN_STANDARD;
 		if(MODULE_PAYMENT_SECUREPAYXML_MODE == MODULE_PAYMENT_SECUREPAYXML_MODE_PREAUTH)
@@ -407,12 +403,14 @@ class securepayxml
 
 		if($type == SECUREPAY_TXN_PREAUTH)
 		{
-			$result = $sxml->processCreditPreauth($amount,$oid,$cc_number,$cc_month,$cc_year,$cvv);
+			// BMH $result = $sxml->processCreditPreauth($amount,$oid,$cc_number,$cc_month,$cc_year,$cvv);
+            $result = $sxml->processCreditPreauth($amount,$api_order_id,$cc_number,$cc_month,$cc_year,$cvv);
 		}
 		else
 		{ // BMH debug
 			// BMH DEBUG echo 'securepayxml line 331 $oid=' . $oid; // BMH
-			$result = $sxml->processCreditStandard($amount,$oid,$cc_number,$cc_month,$cc_year,$cvv);
+			// BMH $result = $sxml->processCreditStandard($amount,$oid,$cc_number,$cc_month,$cc_year,$cvv);
+            $result = $sxml->processCreditStandard($amount,$api_order_id,$cc_number,$cc_month,$cc_year,$cvv);
 			// BMH DEBUG var_dump($result); // BMH
 		}
 

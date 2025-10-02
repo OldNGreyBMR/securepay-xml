@@ -1,5 +1,4 @@
 <?php
-
 /**
  * securepay_xml_api.php:
  *
@@ -10,20 +9,18 @@
  *
  * @author Andrew Dubbeld (support@securepay.com.au)
  * @date 19-Oct-2009
+ * @maintainer OldNGrey (BMH) since 2017
  */
-// BMH 2019 debugging
-//					line  remove append code [being added in all cases ]
-// BMH 2022-12-11 ln1306 implode(): Argument #2 ($array) must be of type ?array, string given
-// BMH 2024-08-20 ln1312 implode(): Argument #2 ($array) must be of type ?array, string given ;PHP 8+
 // BMH  2025-09-29 add version number in comment to match securepayxml.php; 
-// Version 1.5.9
+// Version 1.5.9a
+// 2025-10-02 159a use of $oid and $api_order_id to identify diff 
 /* Modes */
-define( 'SECUREPAY_GATEWAY_MODE_TEST',			 1);
-define( 'SECUREPAY_GATEWAY_MODE_LIVE',			 2);
-define( 'SECUREPAY_GATEWAY_MODE_PERIODIC_TEST',	 3);
-define( 'SECUREPAY_GATEWAY_MODE_PERIODIC_LIVE',	 4);
-define( 'SECUREPAY_GATEWAY_MODE_FRAUD_TEST',	 5);
-define( 'SECUREPAY_GATEWAY_MODE_FRAUD_LIVE',	 6);
+define( 'SECUREPAY_GATEWAY_MODE_TEST',		  1);
+define( 'SECUREPAY_GATEWAY_MODE_LIVE',		  2);
+define( 'SECUREPAY_GATEWAY_MODE_PERIODIC_TEST',3);
+define( 'SECUREPAY_GATEWAY_MODE_PERIODIC_LIVE',4);
+define( 'SECUREPAY_GATEWAY_MODE_FRAUD_TEST',	  5);
+define( 'SECUREPAY_GATEWAY_MODE_FRAUD_LIVE',	  6);
 
 /* Server URLs */
 define('SECUREPAY_URL_TEST', 'https://test.api.securepay.com.au/xmlapi/payment');
@@ -36,19 +33,18 @@ define('SECUREPAY_URL_FRAUD_LIVE', 'https://test.api.securepay.com.au/antifraud/
 /* Transaction types. */
 define( 'SECUREPAY_TXN_STANDARD',		 0);
 define( 'SECUREPAY_TXN_REFUND',			 4);
-define( 'SECUREPAY_TXN_REVERSE',		 6);
+define( 'SECUREPAY_TXN_REVERSE',		     6);
 define( 'SECUREPAY_TXN_PREAUTH', 		10);
-define( 'SECUREPAY_TXN_ADVICE', 		11);
-define( 'SECUREPAY_TXN_DIRECTDEBIT',	15);
+define( 'SECUREPAY_TXN_ADVICE', 		    11);
+define( 'SECUREPAY_TXN_DIRECTDEBIT',	    15);
 define( 'SECUREPAY_TXN_DIRECTCREDIT', 	17);
 define( 'SECUREPAY_TXN_ANTIFRAUD_PAY', 	21);
-define( 'SECUREPAY_TXN_ANTIFRAUD_CHECK',22);
+define( 'SECUREPAY_TXN_ANTIFRAUD_CHECK', 22);
 
 /* Request types */
 define( 'SECUREPAY_REQ_ECHO', 		  	'Echo');
 define( 'SECUREPAY_REQ_PAYMENT',   		'Payment');
 define( 'SECUREPAY_REQ_PERIODIC', 		'Periodic');
-
 define( 'SECUREPAY_CURRENCY_DEFAULT',	'AUD');
 
 /**
@@ -119,7 +115,6 @@ class securepay_xml_transaction
 	private $txnReference;
     public $amount;
 	private $preauthID;
-
 	private $currency=SECUREPAY_CURRENCY_DEFAULT;
 
 	private $requestType, $periodicType, $periodicInterval;
@@ -840,11 +835,11 @@ class securepay_xml_transaction
 			}
 			return false;
 		}
-        // BMH DEBUG  $this->_logapi("ln843 " . $this->responseArray["raw-response"], 'securepay');  // BMH DEBUG 
-        // BMH  DEBUG $this->_logapi("ln845 " . print_r($response, true)) ; // BMH DEBUG 
+        // BMH DEBUG          $this->_logapi("d"," ln838 var_dump \r\n " ,$response);  // BMH DEBUG  DOES NOT WORK
+        // BMH  DEBUG         $this->_logapi("p"," ln840 print_r ", $response) ; // BMH DEBUG 
 
 		//Process response for validity
-		if ( $this->processTransactionResponseMessageIntoResponseArray( $response ) === false )
+		if ( $this->processTransactionResponseMessageIntoResponseArray(  $response ) === false )
 		{
 			if ( strlen( $this->errorString ) == 0 )
 			{
@@ -1179,12 +1174,20 @@ $x .=	"</SecurePayMessage>";
 	 * @param string $responseMessage - An XML response from the gateway
 	 * @return boolean True to indicate succesful decoding of response message AND succesful txn result, false to indicate an error or declined result
 	 */
-	private function processTransactionResponseMessageIntoResponseArray ( $responseMessage )
+	private function processTransactionResponseMessageIntoResponseArray ( string $responseMessage ) : bool
 	{
-   
+    global $oid;
+    global $customer_id; 
+    global $cc_month; 
+    global $cc_year; 
+
 		$xmlres = array();
 		$xmlres = $this->convertXMLToNestedArray( $responseMessage );
-        // BMH DEBUG   $this->_logapi('ln1192 $xmlres= <br> ' . print_r($xmlres,true) . ": $" . number_format(($this->amount/100),2) . " #" . $this->oid . " Cust:". $this->customer_id . " Exp:" . $this->cc_month . "/" . $this->cc_year); // BMH
+        // BMH DEBUG   
+        //$this->_logapi('ln1184 $xmlres= <br> ' . print_r($xmlres,true) . ": $" . number_format(($this->amount/100),2) . " #" . $this->oid . " Cust:". $this->customer_id . " Exp:" . $this->cc_month . "/" . $this->cc_year); // BMH
+        //$msg =  ' ln1188 var_dump $xmlres=  ' . number_format(($this->amount/100),2) . ' #' . $oid . ' Cust:' . $customer_id . ' Exp:' . $cc_month . '/' . $cc_year; // BMH
+        //$this->_logapi("d", $msg ,$xmlres  ); // BMH
+        // BMH DEBUG         $this->_logapi("p",   ' ln1191 print_r $xmlres=  ' .'Amt:' .number_format(($this->amount/100),2) . ' #' . $this->oid . ' Cust:' . $this->customer_id . ' Exp:' . $this->cc_month . '/' . $this->cc_year , $xmlres); // BMH
 
 		if ( $xmlres === false )
 		{
@@ -1291,7 +1294,7 @@ $x .=	"</SecurePayMessage>";
 	 * @param string $XMLDocument An XML document
 	 * @return boolean True to indicate succesful conversion of document, false to indicate an error
 	 */
-	private function convertXMLToNestedArray ( $XMLDocument )
+	private function convertXMLToNestedArray (string $XMLDocument )  
 	{
 
 		$output = array();
@@ -1348,7 +1351,7 @@ $x .=	"</SecurePayMessage>";
 
 
 
-    function _logapi($msg, $suffix = '')
+    function _logapi($x, $msg, $dump)
 	{ 
         global $purchaseOrderId;
         //global $_logapiDir;
@@ -1356,10 +1359,26 @@ $x .=	"</SecurePayMessage>";
 		$file = $this->_logapiDir . '/' . 'Securepayxmlapi.log';
 		if ($fp = @fopen($file, 'a'))
 		{
-            $today = date("Y-m-d_H-i");         // BMH
-			@fwrite($fp, "".time().": ".$today . ": " .$msg . " " . $purchaseOrderId ."\r\n"); // stores epoch time + date
+        $today = date("Y-m-d_H-i");         // BMH
+        switch ($x) {
+            case "x":
+
+                break;
+
+            case "d":
+                @fwrite($fp, "".time().": ".$today . $msg . " \r\n" . var_dump($dump) ."\r\n"); 
+                // BMH @fwrite($fp, "".time().": ".$msg); // stores time as epoch time
+                break;
+
+            case "p":
+                @fwrite($fp, "".time().": ".$today . $msg . " \r\n" . print_r($dump, true) ."\r\n"); 
+                // @fwrite($fp, "".time().": ".$today . ": "  . 'OrderId: ' . $purchaseOrderId  . '<br>'. print_r($dump, true) ."\r\n"); // stores epoch time + date
+                // BMH @fwrite($fp, "".time().": ".$msg); // stores time as epoch time
+                break;
+        }
+			//@fwrite($fp, "".time().": ".$today . ": " .$msg . " " . $purchaseOrderId ."\r\n"); // stores epoch time + date
             // BMH @fwrite($fp, "".time().": ".$msg); // stores time as epoch time
-			@fclose($fp);
+			//@fclose($fp);
 		}
 	}
 }
