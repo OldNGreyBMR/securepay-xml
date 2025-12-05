@@ -12,8 +12,9 @@
  * @maintainer OldNGrey (BMH) since 2017
  */
 // BMH  2025-09-29 add version number in comment to match securepayxml.php; 
-// Version 1.5.9a
+// Version 1.5.9c
 // 2025-10-02 159a use of $oid and $api_order_id to identify diff 
+// 2025-12-02 159c trim() Using the null coalescing operator (??): Provide a default empty string if the value is null.
 /* Modes */
 define( 'SECUREPAY_GATEWAY_MODE_TEST',		  1);
 define( 'SECUREPAY_GATEWAY_MODE_LIVE',		  2);
@@ -268,10 +269,10 @@ class securepay_xml_transaction
 	/* @param string/int month MM or month M - If there are leading zeros, type needs to be string*/
 	public function setCCExpiryMonth($month)
 	{
-		$l = strlen(trim($month));
+		$l = strlen(trim($month) ?? ''); // BMH 2025-12-02
 		if($l == 1)
 		{
-			$this->ccExpiryMonth = sprintf("%02d",ltrim($month,'0'));
+			$this->ccExpiryMonth = sprintf("%02d",ltrim($month,'0') ?? ''); // BMH 2025-12-02
 		}
 		else
 		{
@@ -284,7 +285,7 @@ class securepay_xml_transaction
 	/* @param string/int year YY or year Y or year YYYY - If there are leading zeros, type needs to be string*/
 	public function setCCExpiryYear($year)
 	{
-		$y = ltrim(trim((string)$year),"0");
+		$y = ltrim(trim((string)$year ?? ''),"0"); // BMH 2025-12-02
 		$l = strlen($y);
 		if($l==4)
 		{
@@ -1202,8 +1203,8 @@ $x .=	"</SecurePayMessage>";
 		// BMH $responseArray["raw-XML-response"] = htmlentities($responseMessage);
         $responseArray["raw-response"] = htmlentities($responseMessage);
 
-		$statusCode = trim( $xmlres['SecurePayMessage']['Status']['statusCode'] );
-		$statusDescription = trim($xmlres['SecurePayMessage']['Status']['statusDescription']);
+		$statusCode = trim( $xmlres['SecurePayMessage']['Status']['statusCode'] ?? ''); // BMH 2025-12-02
+		$statusDescription = trim($xmlres['SecurePayMessage']['Status']['statusDescription'] ?? ''); // BMH 2025-12-02
 
 		$responseArray["statusCode"] = $statusCode;
 		$responseArray["statusDescription"] = $statusDescription;
@@ -1215,29 +1216,29 @@ $x .=	"</SecurePayMessage>";
 			return false;
 		}
 
-		$responseArray["messageID"] = trim($xmlres['SecurePayMessage']['MessageInfo']['messageID']);
-		$responseArray["messageTimestamp"] = trim($xmlres['SecurePayMessage']['MessageInfo']['messageTimestamp']);
-		$responseArray["apiVersion"] = trim($xmlres['SecurePayMessage']['MessageInfo']['apiVersion']);
-		$responseArray["RequestType"] =  trim($xmlres['SecurePayMessage']['RequestType']);
-		$responseArray["merchantID"] = trim($xmlres['SecurePayMessage']['MerchantInfo']['merchantID']);
-		$responseArray["txnType"] = trim($xmlres['SecurePayMessage']['Payment']['TxnList']['Txn']['txnType']);
-		$responseArray["txnSource"] = trim($xmlres['SecurePayMessage']['Payment']['TxnList']['Txn']['txnSource']);
-		$responseArray["amount"] = trim($xmlres['SecurePayMessage']['Payment']['TxnList']['Txn']['amount']);
-		$responseArray["approved"] = trim($xmlres['SecurePayMessage']['Payment']['TxnList']['Txn']['approved']);
-		$responseArray["responseCode"] = trim($xmlres['SecurePayMessage']['Payment']['TxnList']['Txn']['responseCode']);
-		$responseArray["responseText"] = trim($xmlres['SecurePayMessage']['Payment']['TxnList']['Txn']['responseText']);
-		$responseArray["banktxnID"] = trim($xmlres['SecurePayMessage']['Payment']['TxnList']['Txn']['txnID']);
-		$responseArray["settlementDate"] = trim($xmlres['SecurePayMessage']['Payment']['TxnList']['Txn']['settlementDate']);
+		$responseArray["messageID"] = trim($xmlres['SecurePayMessage']['MessageInfo']['messageID'] ?? ''); // BMH 2025-12-02
+		$responseArray["messageTimestamp"] = trim($xmlres['SecurePayMessage']['MessageInfo']['messageTimestamp'] ?? ''); // BMH 2025-12-02
+		$responseArray["apiVersion"] = trim($xmlres['SecurePayMessage']['MessageInfo']['apiVersion'] ?? ''); // BMH 2025-12-02
+		$responseArray["RequestType"] =  trim($xmlres['SecurePayMessage']['RequestType'] ?? ''); // BMH 2025-12-02
+		$responseArray["merchantID"] = trim($xmlres['SecurePayMessage']['MerchantInfo']['merchantID'] ?? ''); // BMH 2025-12-02
+		$responseArray["txnType"] = trim($xmlres['SecurePayMessage']['Payment']['TxnList']['Txn']['txnType'] ?? ''); // BMH 2025-12-02
+		$responseArray["txnSource"] = trim($xmlres['SecurePayMessage']['Payment']['TxnList']['Txn']['txnSource'] ?? ''); // BMH 2025-12-02
+		$responseArray["amount"] = trim($xmlres['SecurePayMessage']['Payment']['TxnList']['Txn']['amount'] ?? ''); // BMH 2025-12-02
+		$responseArray["approved"] = trim($xmlres['SecurePayMessage']['Payment']['TxnList']['Txn']['approved'] ?? ''); // BMH 2025-12-02 
+		$responseArray["responseCode"] = trim($xmlres['SecurePayMessage']['Payment']['TxnList']['Txn']['responseCode'] ?? ''); // BMH 2025-12-02
+		$responseArray["responseText"] = trim($xmlres['SecurePayMessage']['Payment']['TxnList']['Txn']['responseText'] ?? ''); // BMH 2025-12-02
+		$responseArray["banktxnID"] = trim($xmlres['SecurePayMessage']['Payment']['TxnList']['Txn']['txnID'] ?? ''); // BMH 2025-12-02
+		$responseArray["settlementDate"] = trim($xmlres['SecurePayMessage']['Payment']['TxnList']['Txn']['settlementDate'] ?? ''); // BMH 2025-12-02
 
 		if($this->isFraudGuard())
 		{
-			$responseArray["fraudGuardCode"] = trim($xmlres['SecurePayMessage']['Payment']['TxnList']['Txn']['antiFraudResponseCode']);
-			$responseArray["fraudGuardText"] = trim($xmlres['SecurePayMessage']['Payment']['TxnList']['Txn']['antiFraudResponseText']);
+			$responseArray["fraudGuardCode"] = trim($xmlres['SecurePayMessage']['Payment']['TxnList']['Txn']['antiFraudResponseCode'] ?? ''); // BMH 2025-12-02
+			$responseArray["fraudGuardText"] = trim($xmlres['SecurePayMessage']['Payment']['TxnList']['Txn']['antiFraudResponseText'] ?? ''); // BMH 2025-12-02
 		}
 
 		if( $this->getTxnType()==SECUREPAY_TXN_PREAUTH && array_key_exists('preauthID',$xmlres['SecurePayMessage']['Payment']['TxnList']['Txn']))
 		{
-			$responseArray["preauthID"] = trim($xmlres['SecurePayMessage']['Payment']['TxnList']['Txn']['preauthID']);
+			$responseArray["preauthID"] = trim($xmlres['SecurePayMessage']['Payment']['TxnList']['Txn']['preauthID'] ?? ''); // BMH 2025-12-02
 		}
 
 		if($this->getRequestType() == SECUREPAY_REQ_PERIODIC)
@@ -1245,22 +1246,22 @@ $x .=	"</SecurePayMessage>";
 			if(	$this->getTxnType()==SECUREPAY_TXN_STANDARD	||
 				$this->getTxnType()==SECUREPAY_TXN_PREAUTH )
 			{
-				$responseArray["creditCardPAN"] = trim($xmlres['SecurePayMessage']['Periodic']['PeriodicList']['PeriodicItem']['CreditCardInfo']['pan']);
-				$responseArray["expiryDate"] = trim($xmlres['SecurePayMessage']['Payment']['TxnList']['Txn']['CreditCardInfo']['expiryDate']);
+				$responseArray["creditCardPAN"] = trim($xmlres['SecurePayMessage']['Periodic']['PeriodicList']['PeriodicItem']['CreditCardInfo']['pan'] ?? ''); // BMH 2025-12-02
+				$responseArray["expiryDate"] = trim($xmlres['SecurePayMessage']['Payment']['TxnList']['Txn']['CreditCardInfo']['expiryDate']) ?? ''; // BMH 2025-12-02
 			}
 		}
 		else if (strtoupper($responseArray['approved']) == 'YES' &&
 				($this->getTxnType()==SECUREPAY_TXN_DIRECTDEBIT ||
 				 $this->getTxnType()==SECUREPAY_TXN_DIRECTCREDIT) )
 		{
-			$responseArray["bsbNumber"] = trim($xmlres['SecurePayMessage']['Payment']['TxnList']['Txn']['DirectEntryInfo']['bsbNumber']);
-			$responseArray["accountNumber"] = trim($xmlres['SecurePayMessage']['Payment']['TxnList']['Txn']['DirectEntryInfo']['accountNumber']);
-			$responseArray["accountName"] = trim($xmlres['SecurePayMessage']['Payment']['TxnList']['Txn']['DirectEntryInfo']['accountName']);
+			$responseArray["bsbNumber"] = trim($xmlres['SecurePayMessage']['Payment']['TxnList']['Txn']['DirectEntryInfo']['bsbNumber'] ?? ''); // BMH 2025-12-02
+			$responseArray["accountNumber"] = trim($xmlres['SecurePayMessage']['Payment']['TxnList']['Txn']['DirectEntryInfo']['accountNumber'] ?? ''); // BMH 2025-12-02
+			$responseArray["accountName"] = trim($xmlres['SecurePayMessage']['Payment']['TxnList']['Txn']['DirectEntryInfo']['accountName'] ?? ''); // BMH 2025-12-02
 		}
 		else if ($this->getRequestType() == SECUREPAY_REQ_PAYMENT)
 		{
-			$responseArray["creditCardPAN"] = trim($xmlres['SecurePayMessage']['Periodic']['PeriodicList']['PeriodicItem']['CreditCardInfo']['pan']);
-			$responseArray["expiryDate"] = trim($xmlres['SecurePayMessage']['Payment']['TxnList']['Txn']['CreditCardInfo']['expiryDate']);
+			$responseArray["creditCardPAN"] = trim($xmlres['SecurePayMessage']['Periodic']['PeriodicList']['PeriodicItem']['CreditCardInfo']['pan'] ?? ''); // BMH 2025-12-02
+			$responseArray["expiryDate"] = trim($xmlres['SecurePayMessage']['Payment']['TxnList']['Txn']['CreditCardInfo']['expiryDate'] ?? ''); // BMH 2025-12-02
 		}
 
 		$this->responseArray = $responseArray;
@@ -1281,7 +1282,7 @@ $x .=	"</SecurePayMessage>";
 		}
 		else
 		{
-			$this->errorString = self::GATEWAY_ERROR_TXN_DECLINED." (".trim($responseArray["responseCode"])."): ".trim($responseArray["responseText"]);
+			$this->errorString = self::GATEWAY_ERROR_TXN_DECLINED." (".trim($responseArray["responseCode"] ?? '')."): ".trim($responseArray["responseText"] ?? ''); // BMH 2025-12-02
 			return false;
 		}
 	}
