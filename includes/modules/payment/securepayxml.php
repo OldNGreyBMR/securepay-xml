@@ -22,12 +22,12 @@
 // 2025-09-30 add random suffix to transaction id to ensure uniqueness
 // 2025-10-02 159a ln391 use of $oid and $api_order_id to identify diff 
 // 2025-11-01 ln293 fix ?? [v1.5.9b]
-
+// 2025-12-02 trim v1.5.9c
 
 // BMH @ini_set('error_reporting', E_STRICT);
 //declare(strict_types=1);
 if (!defined('VERSION_SECUREPAYXML')) {
-    define('VERSION_SECUREPAYXML', '1.5.9b');
+    define('VERSION_SECUREPAYXML', '1.5.9c');
 }
 // BMH check which zc version and preload language files if required.
 // Language files may be required if this module is called directly eg from edit _orders
