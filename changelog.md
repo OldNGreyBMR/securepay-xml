@@ -1,9 +1,10 @@
 Change Log
-securepay xml V159c
+securepay xml V159d
 ==================
-Changes for Version 159c
+Changes for Version 159d
 -----------------------
-reformat; PHP8.4 compliant; Zen Cart V2.2.0 compliant
+PHP 8.5 compliant remove deprecated commands
+reformat; PHP8.4 compliant; Zen Cart V2.1.0 compliant
 add version number id Admin console; improve instructions
 
 Changes for Version 159
@@ -21,4 +22,6 @@ Changes for Version 159
 5 SecurePay logos displayed on checkout page
 6 updated for PHP 8.4
 7 trim deprecated in PHP8.1
+8 reformat; PHP8.4 compliant; Zen Cart V2.2.0 compliant; add version number id Admin console; improve instructions
+9 
 
