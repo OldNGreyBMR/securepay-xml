@@ -9,12 +9,14 @@
  *
  * @author Andrew Dubbeld (support@securepay.com.au)
  * @date 19-Oct-2009
+ * @copyright Copyright 2003-2026 Zen Cart Development Team
  * @maintainer OldNGrey (BMH) since 2017
  */
 // BMH  2025-09-29 add version number in comment to match securepayxml.php; 
-// Version 1.5.9c
+// Version 1.5.9d
 // 2025-10-02 159a use of $oid and $api_order_id to identify diff 
 // 2025-12-02 159c trim() Using the null coalescing operator (??): Provide a default empty string if the value is null.
+// 2025-12-10 159d redundant curl_close($ch) for PHP 8.0 to 8.5; xml_parder_free deprecated in PHP 8.5
 /* Modes */
 define( 'SECUREPAY_GATEWAY_MODE_TEST',		  1);
 define( 'SECUREPAY_GATEWAY_MODE_LIVE',		  2);
@@ -1149,7 +1151,7 @@ $x .=	"</SecurePayMessage>";
         $debugoutput = curl_getinfo($ch);
         $curl_error_message = curl_error($ch); // must retrieve an error message (if any) before closing the curl object
 
-        curl_close($ch);
+        // PHP 8.0 to 8.5 redundant curl_close($ch);
 
         if ($result === false) {
             $this->errorString = self::GATEWAY_ERROR_CURL_ERROR . ': ' . $curl_error_message;
@@ -1310,12 +1312,12 @@ $x .=	"</SecurePayMessage>";
 		{
 
 			$this->errorString = self::GATEWAY_ERROR_XML_PARSE_FAILED.": ".xml_get_error_code ( $parser )." ".xml_error_string (xml_get_error_code ( $parser ) );
-			xml_parser_free($parser);
+			// PHP8.5 deprecated xml_parser_free($parser);
 
 			return false;
 		}
 
-		xml_parser_free($parser);
+		// PHP 8.0 to 8.5 xml_parser_free($parser);
 
 		$hash_stack = array();
 

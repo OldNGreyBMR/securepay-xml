@@ -1,13 +1,16 @@
 <?php
 /**
  * @package linkpoint_api_payment_module
- * @copyright Copyright 2003-2007 Zen Cart Development Team
+ * @copyright Copyright 2003-2026 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @copyright Portions Copyright 2003 Jason LeBaron 
  * @copyright Portions Copyright 2004 DevosC.com 
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
  * @version $Id: linkpoint_api_admin_notification.php 7314 2007-10-29 22:58:19Z drbyte $
- */
+ */ //
+//  @maintainer OldNGrey (BMH) since 2017
+//  BMH  2025-09-29 add version number in comment to match securepayxml.php; 
+// Version 1.5.9d
 
 $outputStartBlock = '';
 $outputMain = '';

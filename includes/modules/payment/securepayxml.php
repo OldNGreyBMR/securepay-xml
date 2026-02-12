@@ -9,7 +9,7 @@
  * @author Andrew Dubbeld (support@securepay.com.au)
  * @date 12-Oct-2009
  * @notes Partially derived from the linkpoint api module, which is:
- * @copyright Copyright 2003-2007 Zen Cart Development Team
+ * @copyright Copyright 2003-2026 Zen Cart Development Team
  * @copyright Portions Copyright 2003 osCommerce
  * @copyright Portions Copyright 2003 Jason LeBaron
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
@@ -23,11 +23,12 @@
 // 2025-10-02 159a ln391 use of $oid and $api_order_id to identify diff 
 // 2025-11-01 ln293 fix ?? [v1.5.9b]
 // 2025-12-02 trim v1.5.9c
+// 2025-12-10 1.5.9d redundant curl_close($ch) for PHP 8.0 to 8.5
 
 // BMH @ini_set('error_reporting', E_STRICT);
 //declare(strict_types=1);
 if (!defined('VERSION_SECUREPAYXML')) {
-    define('VERSION_SECUREPAYXML', '1.5.9c');
+    define('VERSION_SECUREPAYXML', '1.5.9d');
 }
 // BMH check which zc version and preload language files if required.
 // Language files may be required if this module is called directly eg from edit _orders
