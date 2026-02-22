@@ -1,12 +1,13 @@
 Change Log
-securepay xml V159c
+securepay xml V159e
 ==================
-Changes for Version 159c
+**Changes for Version 159e
 -----------------------
-reformat; PHP8.4 compliant; Zen Cart V2.2.0 compliant
+PHP 8.5 compliant remove deprecated commands
+reformat; PHP8.4 compliant; Zen Cart V2.1.0 compliant
 add version number id Admin console; improve instructions
 
-Changes for Version 159
+Changes for Version 159e
 -----------------------
 1. change log file output
 2. strftime deprecated so replace with date() 
@@ -21,4 +22,7 @@ Changes for Version 159
 5 SecurePay logos displayed on checkout page
 6 updated for PHP 8.4
 7 trim deprecated in PHP8.1
+8 reformat; PHP8.4 compliant; Zen Cart V2.2.0 compliant; add version number id Admin console; improve instructions
+9 add null coalesce on lines where cc fields are not filled out and user submits payment
+10 remove spaces from the CVV
 
