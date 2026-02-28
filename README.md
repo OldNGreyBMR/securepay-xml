@@ -1,5 +1,5 @@
-Date Submitted: 2026-02-15
-Version 1.5.9e
+Date Submitted: 2026-02-26
+Version 1.5.9f
 Author:         OldNGrey (BMH)
 
 "SecurePay XML API" Installation Guide for Zen Cart 1.5.8 to 2.2.0
@@ -8,13 +8,13 @@ This plugin enables support for credit-card transactions via the SecurePay (AU) 
 
 BMH  changes
 ============
-Amendments updated to be compatible with Zen Cart 158+ and PHP 8.3 & 8.4 & 8.5
+Amendments updated to be compatible with Zen Cart 158+ and PHP 8.2 & 8.3 & 8.4 & 8.5
 see file changelog.md for all changes
 
 Dependencies:
 --------------
 Zen Cart 1.5.8a or greater to 2.2.0
-PHP 8.1 to 8.5
+PHP 8.2 to 8.5
 cURL
 
 "SecurePay XML API" Installation Guide for Zen Cart 1.5.8+

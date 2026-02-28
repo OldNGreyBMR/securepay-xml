@@ -1,11 +1,15 @@
 Change Log
-securepay xml V159e
+securepay xml V159f
 ==================
-**Changes for Version 159e
+**Changes for Version 159f
 -----------------------
 PHP 8.5 compliant remove deprecated commands
 reformat; PHP8.4 compliant; Zen Cart V2.1.0 compliant
 add version number id Admin console; improve instructions
+
+Changes for Version 159f
+------------------------
+1. add some additional logging for debugging purposes, and added a check to ensure that the response from the gateway is not empty before attempting to parse it as XML, to avoid potential errors when the gateway returns an empty response.
 
 Changes for Version 159e
 -----------------------
@@ -25,4 +29,3 @@ Changes for Version 159e
 8 reformat; PHP8.4 compliant; Zen Cart V2.2.0 compliant; add version number id Admin console; improve instructions
 9 add null coalesce on lines where cc fields are not filled out and user submits payment
 10 remove spaces from the CVV
-
