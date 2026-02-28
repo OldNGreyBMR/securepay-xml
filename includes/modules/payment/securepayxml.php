@@ -13,7 +13,7 @@
  * @copyright Portions Copyright 2003 osCommerce
  * @copyright Portions Copyright 2003 Jason LeBaron
  * @license http://www.zen-cart.com/license/2_0.txt GNU Public License V2.0
- * @updated 2025-10-02
+ * @updated 2026-02-24 V1.5.9f
  * @amaintainedby OldNGrey (BMH) since 2017
  */
 // Modifications
@@ -26,12 +26,17 @@
 // 2025-12-10 1.5.9d redundant curl_close($ch) for PHP 8.0 to 8.5
 // 2026-02-13 1.5.9d.1 BMH add version number in comment to match securepayxml.php; also added some comments to the code for clarity, and made some minor formatting changes for readability. No functional changes were made.
 // 2026-02-15 159e BMH add null coalescing operator to avoid undefined index error when 'raw-response' is not set in the response array; also added a line to remove spaces from the CVV just in case, since some issuers include spaces in the CVV on the card, and this could cause a failed transaction if not removed.
+// 2026-02-26 1.5.9f BMH add some additional logging for debugging purposes, and added a check to ensure that the response from the gateway is not empty before attempting to parse it as XML, to avoid potential errors when the gateway returns an empty response.
 
 // BMH @ini_set('error_reporting', E_STRICT);
 //declare(strict_types=1);
 if (!defined('VERSION_SECUREPAYXML')) {
-    define('VERSION_SECUREPAYXML', '1.5.9e');
+    define('VERSION_SECUREPAYXML', '1.5.9f');
 }
+define('SECUREPAY_CODE_DEBUG', 'TRUE'); // values = TRUE OR false; BMH debug switch to write to transaction log file use for testing only
+if (!defined('MODULE_PAYMENT_SECUREPAYXML_CODE_DEBUG'))
+    define('MODULE_PAYMENT_SECUREPAYXML_CODE_DEBUG', '');
+//check for debugging switch to allow debugging by specified IP address when down for maintenance // original code
 // BMH check which zc version and preload language files if required.
 // Language files may be required if this module is called directly eg from edit _orders
 if (!defined('MODULE_PAYMENT_SECUREPAYXML_TEXT_ADMIN_TITLE')) {
@@ -66,6 +71,7 @@ require_once(DIR_FS_CATALOG . DIR_WS_MODULES . 'payment/securepay_xml_api.php');
 class securepayxml
 {
     public $auth_code; // BMH remove as zero refs
+    public $amount;
     public $code;
     public $description;
     public $enabled;
@@ -83,7 +89,7 @@ class securepayxml
     public $code_debug; // Added to fix undefined property $code_debug error
     private $_logDir = DIR_FS_SQL_CACHE;
     private $_logtransDir = DIR_FS_SQL_CACHE;
-    private $mode = SECUREPAY_GATEWAY_MODE_TEST;
+    public $mode = SECUREPAY_GATEWAY_MODE_TEST;
     private $_check; // Added to fix undefined property $_check error
 
     function __construct()
@@ -91,24 +97,7 @@ class securepayxml
         global $order, $messageStack;
         $this->code = 'securepayxml';
         $this->enabled = ((MODULE_PAYMENT_SECUREPAYXML_STATUS == 'True') ? true : false); // Whether the module is installed or not
-        // BMH 2020-11-14 Undefined index: main_page bof
-        //if (!isset($_GET['main_page'])) , $_GET['main_page'] = 'index';
 
-        /*if ($_GET['main_page'] != '' && !IS_ADMIN_FLAG === true)
-                {
-                    $this->title = MODULE_PAYMENT_SECUREPAYXML_TEXT_CATALOG_TITLE; // Payment module title in Catalog
-                }
-                else
-                {
-                    $this->title = MODULE_PAYMENT_SECUREPAYXML_TEXT_ADMIN_TITLE; // Payment module title in Admin
-                    $this->description = 'V' . VERSION_SECUREPAYXML . ' <br>' . MODULE_PAYMENT_SECUREPAYXML_TEXT_DESCRIPTION; // show version in admin panel
-
-                    if ($this->enabled && !function_exists('curl_init'))
-                    {
-                        $messageStack->add_session(MODULE_PAYMENT_SECUREPAYXML_TEXT_ERROR_CURL_NOT_FOUND, 'error');
-                    }
-                }
-                    */
         if (IS_ADMIN_FLAG === true) {
             $this->title = MODULE_PAYMENT_SECUREPAYXML_TEXT_ADMIN_TITLE; // Payment module title in Admin
             $this->description = 'V' . VERSION_SECUREPAYXML . ' ' . MODULE_PAYMENT_SECUREPAYXML_TEXT_DESCRIPTION; // show version in admin panel
@@ -119,8 +108,7 @@ class securepayxml
         } else {
             $this->title = MODULE_PAYMENT_SECUREPAYXML_TEXT_CATALOG_TITLE; // Payment module title in Catalog
         }
-        // BMH eof
-        // BMH $this->description = MODULE_PAYMENT_SECUREPAYXML_TEXT_DESCRIPTION;	// Descriptive Info about module in Admin
+
         $this->sort_order = MODULE_PAYMENT_SECUREPAYXML_SORT_ORDER; // Sort Order of this payment option on the customer payment page
         $this->form_action_url = zen_href_link(FILENAME_CHECKOUT_PROCESS, '', 'SSL', false); // Page to go to upon submitting page info
 
@@ -213,7 +201,7 @@ class securepayxml
             '					 error = 1;' . "\n" .
             '				 }' . "\n" .
             '	}' . "\n";
-
+        // BMR 2026-01-16 check cc_cvv length 3 or 4 - 4 is only used for Amex
         return $js;
     }
 
@@ -224,13 +212,13 @@ class securepayxml
         global $ccnum; // BMH
 
         for ($i = 1; $i < 13; $i++) {
-            // BMH $expires_month[] = array('id' => sprintf('%02d', $i), 'text' => strftime('%B - (%m)',mktime(0,0,0,$i,1,2000)));
+            
             $expires_month[] = array('id' => sprintf('%02d', $i), 'text' => date('F - (m)', mktime(0, 0, 0, $i, 1, 2000))); // BMH
         }
 
         $today = getdate();
         for ($i = $today['year']; $i < $today['year'] + 10; $i++) {
-            // BMH $expires_year[] = array('id' => strftime('%y',mktime(0,0,0,1,1,$i)), 'text' => strftime('%Y',mktime(0,0,0,1,1,$i)));
+            
             $expires_year[] = array('id' => date('y', mktime(0, 0, 0, 1, 1, $i)), 'text' => date('Y', mktime(0, 0, 0, 1, 1, $i)));
         }
 
@@ -265,7 +253,6 @@ class securepayxml
 
         return $selection;
     }
-
 
     /* Secondary credit-card detail check. */
     function pre_confirmation_check()
@@ -314,7 +301,6 @@ class securepayxml
                 ),
                 array(
                     'title' => MODULE_PAYMENT_SECUREPAYXML_TEXT_CREDIT_CARD_EXPIRES,
-                    // BMH 'field' => strftime('%B, %Y', mktime(0,0,0,$_POST['securepayxml_cc_expires_month'], 1, '20' . $_POST['securepayxml_cc_expires_year']))
                     'field' => $zcDate->output('%B, %Y', mktime(0, 0, 0, $_POST['securepayxml_cc_expires_month'], 1, '20' . $_POST['securepayxml_cc_expires_year']))
                 )
             )
@@ -333,15 +319,14 @@ class securepayxml
         // These are hidden fields on the checkout confirmation page
         $process_button_string =
             zen_draw_hidden_field('cc_owner', $_POST['securepayxml_cc_owner']) .
-            zen_draw_hidden_field('cc_expires', $this->cc_expiry_month . substr($this->cc_expiry_year, -2)) .
-            zen_draw_hidden_field('cc_expires_month', $this->cc_expiry_month) .
-            zen_draw_hidden_field('cc_expires_year', substr($this->cc_expiry_year, -2)) .
-            zen_draw_hidden_field('cc_type', $this->cc_card_type) .
-            zen_draw_hidden_field('cc_number', $this->cc_card_number) .
+            zen_draw_hidden_field('cc_expires', $this->cc_expiry_month ??''. substr($this->cc_expiry_year ??'',-2)) .
+            zen_draw_hidden_field('cc_expires_month', $this->cc_expiry_month ??'').
+            zen_draw_hidden_field('cc_expires_year', substr($this->cc_expiry_year ??'',-2)) .
+            zen_draw_hidden_field('cc_type', $this->cc_card_type ??'').
+            zen_draw_hidden_field('cc_number', $this->cc_card_number ?? '') .
             zen_draw_hidden_field('cc_cvv', $_POST['securepayxml_cc_cvv']) .
             zen_draw_hidden_field(zen_session_name(), zen_session_id());
-        // BMH DEBUG echo ' BMH line 290 var_dump process button string'; // BMH debug
-        // BMH DEBUG var_dump($process_button_string); // BMH
+
         return $process_button_string;
     }
 
@@ -350,18 +335,15 @@ class securepayxml
      */
     function before_process()
     {
-        // BMH DEBUG echo ' BMH before process line 299' . "<br>"; // BMH debug
         global $order, $db, $messageStack, $_POST, $_SESSION;
 
         $preauth = "";
         $txnid = "";
 
         $sxml = new securepay_xml_transaction($this->mode, MODULE_PAYMENT_SECUREPAYXML_MERCHANTID, MODULE_PAYMENT_SECUREPAYXML_MERCHANTPASS);
-        // BMH DEBUG	echo 'BMH sxml line 306' . "<br>"; //BMH
-        // BMH DEBUG var_dump($sxml);  // BMH
+
         $customer_id = $_SESSION['customer_id'];
 
-        // BMH 159 $amount = $order->info['total'];
         $amount = round($order->info['total'], 2); // BMH
 
         // Create an order ID
@@ -370,8 +352,6 @@ class securepayxml
         $new_order_id = ($new_order_id + 1);
         $oid = ($new_order_id);
 
-        // BMH 159 add randomized suffix to order id to produce uniqueness ... since it's unwise to submit the same order-number twice to the CC clearance system
-        // $oid = (string)$new_order_id . '-' . zen_create_random_value(3, 'chars');
         $api_order_id = (string) $new_order_id . '-' . zen_create_random_value(3, 'chars'); // Ensure uniqueness
 
         $type = SECUREPAY_TXN_STANDARD;
@@ -386,37 +366,61 @@ class securepayxml
         $cvv = str_replace(' ', '', $cvv); // Remove spaces from CVV just in case // BMR 2026-02-15
 
         if ($type == SECUREPAY_TXN_PREAUTH) {
-            // BMH $result = $sxml->processCreditPreauth($amount,$oid,$cc_number,$cc_month,$cc_year,$cvv);
             $result = $sxml->processCreditPreauth($amount, $api_order_id, $cc_number, $cc_month, $cc_year, $cvv);
-        } else { // BMH debug
-            // BMH DEBUG echo 'securepayxml line 331 $oid=' . $oid; // BMH
-            // BMH $result = $sxml->processCreditStandard($amount,$oid,$cc_number,$cc_month,$cc_year,$cvv);
+        } else { 
             $result = $sxml->processCreditStandard($amount, $api_order_id, $cc_number, $cc_month, $cc_year, $cvv);
-            // BMH DEBUG var_dump($result); // BMH
         }
 
-        $txnResultCodeText = $sxml->getErrorString();
-        // BMH DEBUG echo 'BMH line 338 $txnResultCodeText=' . $txnResultCodeText;  // BMH
+        //check error string
+        $txnResultCodeText = '';
+
+        if ($sxml->getErrorString() !== null) {
+            $txnResultCodeText = $sxml->getErrorString();
+
+            $this->_log("ln" . __LINE__ . ' $txnResultCodeText=' . $txnResultCodeText ?? ''); // BMH DEBUG 2026-01-16 log transaction XML
+
+            if (SECUREPAY_CODE_DEBUG == 'TRUE') {
+                $this->_logtrans("p", "ln" . __LINE__ . ' ------------------------------------------------------' . "\r\n", ''); // BMH DEBUG 2026-01-16 log transaction record separator
+                $this->_logtrans("p", "ln" . __LINE__ . ' len($txnResultCodeText) = ' . strlen($txnResultCodeText) . ' : $txnResultCodeText = ', $txnResultCodeText); // BMH DEBUG 2026-01-16 log transaction XML
+            }
+        }
 
         $approved = strtoupper($sxml->getResultByKeyName('approved')) == 'YES' ? true : false;
         $status = $sxml->getResultByKeyName('responseCode');
+
+        if (SECUREPAY_CODE_DEBUG == 'TRUE') {
+            $this->_logtrans("p", "ln" . __LINE__ . ' $status (response_code) : ', $status); // BMH DEBUG 2026-01-16 log status = response code
+        }
         $this->transaction_id = $result;
 
         //get purchaseOrderNo from response
+        // but first check not empty response
+
         $res_xml = $sxml->getResultArray();
-        // BMH $res_xml_string = html_entity_decode($res_xml['raw-XML-response']);
-        $res_xml_string = html_entity_decode($res_xml['raw-response'] ?? ''); // BMH 2026-02-15 added null coalescing operator to avoid undefined index error
+        if (is_array($res_xml) && count($res_xml) > 0) {
+
+            if (SECUREPAY_CODE_DEBUG == 'TRUE') {  // BMH DEBUG 2026-01-16 log transaction XML
+                $this->_logtrans("p", "ln" . __LINE__ . ' $res_xml print_r: ' . "\r\n", $res_xml); 
+            }
+            $res_xml_string = html_entity_decode($res_xml['raw-response'] ?? ''); // 2026-01-15 null coalesce
+
+            if (SECUREPAY_CODE_DEBUG == 'TRUE') {
+                $this->_logtrans("p", "ln" . __LINE__ . ' $res_xml_string print_r: ' . "\r\n", $res_xml_string); // BMH DEBUG 2026-01-16 log transaction XML
+            }
+
         $obj = simplexml_load_string($res_xml_string); // Parse XML
         $array = json_decode(json_encode($obj), true); // Convert to array
         $this->purchaseOrderId = $array['Payment']['TxnList']['Txn']['purchaseOrderNo'];
-        // BMH
-        // BMH DEBUG	echo " BMH response line 343 " . $array['Payment']['TxnList']['Txn']['purchaseOrderNo'];
-        // BMH DEBUG	echo "$this->purchaseOrderId" . $this->purchaseOrderId;
+
         //END get purchaseOrderNo from response
+        } else {
+            if (SECUREPAY_CODE_DEBUG == 'TRUE') {
+                $this->_logtrans("p", "ln" . __LINE__ . ' getResultArray() is not an array', ''); // BMH DEBUG 2026-01-16 log transaction XML
+            }
+        }
 
         if ($approved) {
             //Success
-//echo "BMH SUCCESS line 358"; // BMH
 
             if ($type == SECUREPAY_TXN_PREAUTH) {
                 $preauth = $result;
@@ -425,11 +429,14 @@ class securepayxml
             }
         } else {
             //Error
-            // BMH 159 2025-09-30 $messageStack->add_session('checkout_payment',MODULE_PAYMENT_SECUREPAYXML_TEXT_DECLINED_MESSAGE, 'error');
             $messageStack->add_session('checkout_payment', MODULE_PAYMENT_SECUREPAYXML_TEXT_DECLINED_MESSAGE . " " . $txnResultCodeText . " ", 'error');
             $customer_id = $_SESSION['customer_id'];
-            $this->_log("" . $txnResultCodeText . ": $" . $amount . " #" . $oid . " Cust:" . $customer_id . " Exp:" . $cc_month . "/" . $cc_year); // BMH
-            // BMH $this->_log("" . $txnResultCodeText);
+
+            if (SECUREPAY_CODE_DEBUG == 'TRUE') {
+                $this->_logtrans("p", "ln" . __LINE__ . " Declined: $" . number_format(($amount / 100), 2) . " #" . $oid . " Cust:" . $customer_id . " Exp:" . $cc_month . "/" . $cc_year, ''); // BMH
+            }
+
+            $this->_log("ln" . __LINE__ . " " . $txnResultCodeText . ": $" . number_format(($amount / 100), 2) . " #" . $oid . " Cust:" . $customer_id . " Exp:" . $cc_month . "/" . $cc_year); // BMH
             zen_redirect(zen_href_link(FILENAME_CHECKOUT_PAYMENT, '', 'SSL', true, false));
         }
 
@@ -467,11 +474,6 @@ class securepayxml
 
         $db->Execute("insert into " . TABLE_ORDERS_STATUS_HISTORY . " (comments, orders_id, orders_status_id, date_added) values ('Credit Card payment. " . $comments . " " . $this->cc_card_type . " Transaction ID: " . $this->transaction_id . "' , '" . (int) $insert_id . "','" . $this->order_status . "', now() )");
         // update purchaseOrderId for order
-        // BMH DEBUG	 echo " BMH $this->purchaseOrderId=" . $this->purchaseOrderId . "line 403";
-        // BMH 2019-01-09 purchaseOrderId does not exist in table
-        //              $db->Execute("UPDATE ".TABLE_ORDERS." SET `purchaseOrderId` = '".$this->purchaseOrderId."' WHERE `orders_id` = ".(int)$insert_id);
-        // END update purchaseOrderId for order
-        // BMH end
         return false;
     }
 
@@ -495,7 +497,7 @@ class securepayxml
         if ($txn->RecordCount() > 0) {
             require(DIR_FS_CATALOG . DIR_WS_MODULES . 'payment/securepayxml/securepayxml_admin_notification.php');
         } else {
-            $this->_log("No results on order " . $oid . "\n");
+            $this->_log("ln {__LINE__} No results on order " . $oid . "\n");
         }
         return $output;
     }
@@ -586,7 +588,6 @@ class securepayxml
 
         return $keys_list;
     }
-
 
     /**
      * Update order status and order status history based on admin changes sent to gateway
@@ -702,7 +703,7 @@ class securepayxml
         if ($approved == false) {
             //Gateway error
             $messageStack->add_session($txnResultCodeText, 'error');
-            $this->_log("Failed refund: " . $txnResultCodeText . ": $" . $amount . " #" . $oID);
+            $this->_log("ln {__LINE__} Failed refund: " . $txnResultCodeText . ": $" . $amount . " #" . $oID);
             return false;
         } else {
             // Success, so save the results
@@ -803,7 +804,7 @@ class securepayxml
 
         $amount = $query->fields['total'];
 
-        $this->_log("TxnID: " . $query->fields['banktxnid']);
+        $this->_log("ln {__LINE__} TxnID: " . $query->fields['banktxnid']);
 
         if ($query->RecordCount() < 1) {
             $messageStack->add_session(MODULE_PAYMENT_SECUREPAYXML_TEXT_NO_MATCHING_ORDER_FOUND, 'error');
@@ -844,20 +845,51 @@ class securepayxml
     {
         $file = $this->_logDir . '/' . 'Securepayxml.log';
         if ($fp = @fopen($file, 'a')) {
-            $today = date("Y-m-d_H-i");         // BMH
-            @fwrite($fp, "" . time() . ": " . $today . ": " . $msg . " \r\n"); // stores epoch time + date
+            //$today = date("Y-m-d_H:i:s");         // BMH does not include microseconds
+            $microtime = microtime(true);
+            $timestamp = (int) $microtime;
+            $microseconds = (int) (($microtime - $timestamp) * 1000000);
+            $dt = new DateTime();
+            $dt->setTimestamp($timestamp);
+            $dt->modify("+$microseconds microseconds");
+            $today = $dt->format("Y-m-d_H:i:s:u");
+            @fwrite($fp, "" . time() . ": " . str($today) . " " . $msg . " \r\n"); // stores epoch time + date
             // BMH @fwrite($fp, "".time().": ".$msg); // stores time as epoch time
             @fclose($fp);
         }
     }
-    function _logtrans($msg, $suffix = '')
+    function _logtrans($x, $msg, $dump)
     {
         $file = $this->_logtransDir . '/' . 'Securepaytrans.log';
         if ($fp = @fopen($file, 'a')) {
-            $today = date("Y-m-d_H-i");         // BMH
-            @fwrite($fp, "" . time() . ": " . $today . ": " . $msg . " \r\n"); // stores epoch time + date
-            // BMH @fwrite($fp, "".time().": ".$msg); // stores time as epoch time
-            @fclose($fp);
+            //$today = date("Y-m-d_H:i:s");         // BMH does not include microseconds
+            $microtime = microtime(true);
+            $timestamp = (int) $microtime;
+            $microseconds = (int) (($microtime - $timestamp) * 1000000);
+            $dt = new DateTime();
+            $dt->setTimestamp($timestamp);
+            $dt->modify("+$microseconds microseconds");
+
+            $today = $dt->format("Y-m-d_H:i:s:u");
+            switch ($x) {
+                case "x":
+                    break;
+                case "d":
+                    ob_start();
+                    var_dump($dump);
+                    //$output = ob_get_clean();
+                    $output = ob_get_contents();
+                    //$output1 = html_entity_decode($output);
+                    @fwrite($fp, "" . time() . ": " . $today . "  " . $msg . "var_dump \r\n" . $output . "\r\n"); // stores epoch time + date
+                    @fclose($fp);
+                    ob_end_clean();
+                    break;
+
+                case "p":
+                    @fwrite($fp, "" . time() . ": " . $today . " " . $msg . " " . html_entity_decode(print_r($dump, true)) . "\r\n"); // stores epoch time + date
+                    @fclose($fp);
+                    break;
+            }
         }
     }
 }

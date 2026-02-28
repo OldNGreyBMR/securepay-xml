@@ -11,7 +11,7 @@
 //  @maintainer OldNGrey (BMH) since 2017
 //  BMH  2025-09-29 add version number in comment to match securepayxml.php; 
 // 2026-02-13 159e BMH add version number in comment to match securepayxml.php; also added some comments to the code for clarity, and made some minor formatting changes for readability. No functional changes were made.
-// Version 1.5.9e
+// 2026-02-26 Version 1.5.9f
 $outputStartBlock = '';
 $outputMain = '';
 $outputAuth = '';

@@ -18,6 +18,14 @@
 // 2025-12-02 159c trim() Using the null coalescing operator (??): Provide a default empty string if the value is null.
 // 2025-12-10 159d redundant curl_close($ch) for PHP 8.0 to 8.5; xml_parder_free deprecated in PHP 8.5
 // 2026-02-13 159e BMH add version number in comment to match securepayxml.php; also added some comments to the code for clarity, and made some minor formatting changes for readability. No functional changes were made.
+// 2026-02-26 V1.5.9f
+
+/* switches */
+if (!defined('VERSION_SECUREPAYXMLAPI')) {
+    define('VERSION_SECUREPAYXMLAPI', '1.5.9f');
+}
+// debugging
+define('SECUREPAYXMLAPI_CODE_DEBUG', 'true'); // values = true OR false; BMH debug switch to write to transaction log file use for testing only
 /* Modes */
 define('SECUREPAY_GATEWAY_MODE_TEST', 1);
 define('SECUREPAY_GATEWAY_MODE_LIVE', 2);
@@ -189,7 +197,7 @@ class securepay_xml_transaction
             $this->gatewayObjectValid = false;
             return;
         }
-        // BMH DEBUG var_dump($setup_merchantID) . "line 177" . "<br>"; // BMH
+        // BMH DEBUG var_dump($setup_merchantID) . "line" . __LINE__ .  "<br>"; // BMH
         $this->setAuth($setup_merchantID, $setup_merchantPW);
     }
 
@@ -221,9 +229,10 @@ class securepay_xml_transaction
         return $this->gatewayObjectValid;
     }
 
-    public function getAmount()
+    // Amount is stored as integer cents
+    public function getAmount(): int
     {
-        return $this->amount;
+        return (int) (isset($this->amount) ? $this->amount : 0);
     }
 
     /**
@@ -254,7 +263,8 @@ class securepay_xml_transaction
 
     public function getTxnReference()
     {
-        return $this->txnReference;
+        // BMH 2025-10-02 159a return isset($this->txnReference) ? $this->$txnReference : 0; 
+        return isset($this->txnReference) ? $this->txnReference : 0;
     }
     public function setTxnReference($ref)
     {
@@ -368,14 +378,14 @@ class securepay_xml_transaction
 
     public function getClearCCNumber()
     {
-        $t = $this->getCCNumber();
+        $t = (string) $this->getCCNumber();
         $this->setCCNumber("0");
         return $t;
     }
 
     public function getClearCCVerify()
     {
-        $t = $this->getCCVerify();
+        $t = (string) $this->getCCVerify();
         $this->setCCVerify(0);
         return $t;
     }
@@ -961,8 +971,10 @@ class securepay_xml_transaction
             }
             return false;
         }
-        // BMH DEBUG          $this->_logapi("d"," ln838 var_dump \r\n " ,$response);  // BMH DEBUG  DOES NOT WORK
-        // BMH  DEBUG         $this->_logapi("p"," ln840 print_r ", $response) ; // BMH DEBUG 
+        // BMH DEBUG  
+        if (SECUREPAYXMLAPI_CODE_DEBUG == 'true') {
+            $this->_logapi("p", " ln" . __LINE__ . ' print_r $response ', $response); // BMH DEBUG 
+        }
 
         //Process response for validity
         if ($this->processTransactionResponseMessageIntoResponseArray($response) === false) {
@@ -1078,8 +1090,9 @@ class securepay_xml_transaction
      */
     private function checkTxnParameters()
     {
-        $amount = $this->getAmount();
-        if (preg_match("/^[0-9]/", $amount) == false || (int) $amount < 0) {
+        $amount = (string) $this->getAmount();
+        // Ensure amount is a string of digits (cents) and non-negative
+        if (!preg_match('/^\d+$/', $amount) || (int) $amount < 0) {
             $this->errorString = self::GATEWAY_ERROR_INVALID_TXN_AMT;
             return false;
         }
@@ -1315,12 +1328,19 @@ class securepay_xml_transaction
         $xmlres = array();
         $xmlres = $this->convertXMLToNestedArray($responseMessage);
         // BMH DEBUG   
-        //$this->_logapi('ln1184 $xmlres= <br> ' . print_r($xmlres,true) . ": $" . number_format(($this->amount/100),2) . " #" . $this->oid . " Cust:". $this->customer_id . " Exp:" . $this->cc_month . "/" . $this->cc_year); // BMH
-        //$msg =  ' ln1188 var_dump $xmlres=  ' . number_format(($this->amount/100),2) . ' #' . $oid . ' Cust:' . $customer_id . ' Exp:' . $cc_month . '/' . $cc_year; // BMH
-        //$this->_logapi("d", $msg ,$xmlres  ); // BMH
-        // BMH DEBUG         $this->_logapi("p",   ' ln1191 print_r $xmlres=  ' .'Amt:' .number_format(($this->amount/100),2) . ' #' . $this->oid . ' Cust:' . $this->customer_id . ' Exp:' . $this->cc_month . '/' . $this->cc_year , $xmlres); // BMH
+        if (SECUREPAYXMLAPI_CODE_DEBUG == 'true') {
+            $this->_logapi("p", ' ln' . __LINE__ . ' $xmlres= print_r' . "\r\n : $" . number_format(($this->amount / 100), 2)
 
-        if ($xmlres === false) {
+                . " #" . $this->oid . " Cust:" . $this->customer_id . " Exp:" . $this->cc_month . "/" . $this->cc_year, $xmlres); // BMH
+
+            $msg = ' ln' . __LINE__ . ' var_dump $xmlres=  ' . number_format(($this->amount / 100), 2) . ' #' . $oid . ' Cust:' . $customer_id . ' Exp:' . $cc_month . '/' . $cc_year; // BMH
+            $this->_logapi("d", $msg, $xmlres); // BMH
+
+            $this->_logapi("p", ' ln' . __LINE__ . ' print_r $xmlres=  ' . 'Amt:' . number_format(($this->amount / 100), 2) . ' #' . $this->oid . ' Cust:' . $this->customer_id . ' Exp:' . $this->cc_month . '/' . $this->cc_year, $xmlres); // BMH
+        }
+
+        if ($xmlres === FALSE) // XML parsing error
+        {
             if (strlen($this->errorString) == 0) {
                 $this->errorString = self::GATEWAY_ERROR_RESPONSE_XML_MESSAGE_ERROR;
             }
@@ -1417,7 +1437,7 @@ class securepay_xml_transaction
      * @param string $XMLDocument An XML document
      * @return boolean True to indicate succesful conversion of document, false to indicate an error
      */
-    private function convertXMLToNestedArray(string $XMLDocument)
+    private function convertXMLToNestedArray(string $XMLDocument): array|false
     {
 
         $output = array();
@@ -1476,7 +1496,15 @@ class securepay_xml_transaction
 
         $file = $this->_logapiDir . '/' . 'Securepayxmlapi.log';
         if ($fp = @fopen($file, 'a')) {
-            $today = date("Y-m-d_H-i");         // BMH
+            //$today = date("Y-m-d_H:i:s");         // BMH does not show microseconds
+            $microtime = microtime(true);
+            $timestamp = (int) $microtime;
+            $microseconds = (int) (($microtime - $timestamp) * 1000000);
+            $dt = new DateTime();
+            $dt->setTimestamp($timestamp);
+            $dt->modify("+$microseconds microseconds");
+
+            $today = $dt->format("Y-m-d_H:i:s:u");
             switch ($x) {
                 case "x":
 
