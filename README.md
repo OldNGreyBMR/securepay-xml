@@ -3,9 +3,6 @@ Date Submitted: 2026-04-06
 Version 1.6.1
 Author:         OldNGrey (BMH)
 
-Version 1.6.0
-Author:         OldNGrey (BMH)
-
 "SecurePay XML API" Installation Guide for Zen Cart 1.5.8 to 2.2.2
 ===========================================================
 This plugin enables support for credit-card transactions via the SecurePay (AU) (now owned by FatZebra) payment gateway.
