@@ -1,19 +1,23 @@
-Date Submitted: 2026-02-26
-Version 1.5.9f
+Date Submitted: 2026-04-06
+
+Version 1.6.1
 Author:         OldNGrey (BMH)
 
-"SecurePay XML API" Installation Guide for Zen Cart 1.5.8 to 2.2.0
+Version 1.6.0
+Author:         OldNGrey (BMH)
+
+"SecurePay XML API" Installation Guide for Zen Cart 1.5.8 to 2.2.2
 ===========================================================
-This plugin enables support for credit-card transactions via the SecurePay (AU) payment gateway.
+This plugin enables support for credit-card transactions via the SecurePay (AU) (now owned by FatZebra) payment gateway.
 
 BMH  changes
 ============
-Amendments updated to be compatible with Zen Cart 158+ and PHP 8.2 & 8.3 & 8.4 & 8.5
+Amendments updated to be compatible with Zen Cart 158+, 2.0.0, 2.1.0, 2.2.0, 2.2.2 and PHP 8.3 & 8.4 & 8.5
 see file changelog.md for all changes
 
 Dependencies:
 --------------
-Zen Cart 1.5.8a or greater to 2.2.0
+Zen Cart 1.5.8a or greater to 2.2.2
 PHP 8.2 to 8.5
 cURL
 
@@ -29,12 +33,12 @@ Plugin Details:
 -----------------------------------------------------------
 This plugin enables support for credit-card transactions via the SecurePay (AU) payment gateway.
 
-It supports the following kinds of transactions: (** = not implemented)
+It supports the following kinds of transactions:
 	Standard Credit
-	Preauthorise **
-	Advice (complete) **
-	Refund **
-	Reverse (Void) **
+	Preauthorise
+	Advice (complete)
+	Refund
+	Reverse (Void)
 
 Manual Installation instructions:
 =================================
@@ -77,14 +81,16 @@ These instructions assume that you already have Zen Cart installed, configured a
 Test Gateway Operation
 ======================
 In test mode, your transactions will be sent to the the SecurePay Test Gateway. 
-** The Merchant ID and Password for the test gateway are NOT the same as the Merchant ID and Password for your live Merchant Account. 
-A test Merchant ID and Transaction password are listed below.
+**The Merchant ID and Password for the test gateway are NOT the same as the Merchant ID and Password for your live Merchant Account. 
+Please contact your SecurePay Payment Gateway Reseller or SecurePay Support if you need a test Merchant ID and Transaction password.
 
 You can test with the following settings:
 -----------------------------------------
-Merchant ID = ABC0001 
-Merchant Password = abc123 
-Test Mode = Yes 
+Merchant ID = ABC0001
+Merchant Password = abc123
+Test Mode = Yes
+
+See \docs\Secure_XML_API_Integration_Guide_1.12.pdf page 6 for test examples.
 
 When processing transactions, if the transaction is would otherwise give a 000 "Approved" response
 code, the Test gateway will return the cents portion of the transaction amount as the response code
@@ -94,7 +100,7 @@ To achieve an "approved" test transaction, ensure the total transaction amount (
 shipping costs) is a round dollar value (i.e. $1.00)
 
 Support Contact
----------------
+---------------------------------------------------------------------------------------------------
 Please visit the SecurePay website (http://www.securepay.com.au/) for our support contact details.
 
 SecurePay Documentation
