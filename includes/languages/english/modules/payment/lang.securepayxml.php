@@ -7,9 +7,8 @@
  * // BMH 2025-02-15 modify for zc210 (!defined('MODULE_PAYMENT_SECUREPAYXML_STATUS')
  * //     2025-03-08  MODULE_PAYMENT_SECUREPAYXML_TEXT_REFUND_CONFIRM_ERROR
  * //     2025-12-10  add MODULE_PAYMENT_SECUREPAYXML_ENTRY_CAPTURE_BUTTON_TEXT
- * //     2026-02-15 add version number in comment to match securepayxml.php;
- * // Version 1.5.9e
- */ 
+ * //     2026-04-06 clean up commented old constants
+ */
  
  $define = [
     'MODULE_PAYMENT_SECUREPAYXML_TEXT_ADMIN_TITLE' => 'SecurePay XML API (AU)',
@@ -80,8 +79,6 @@
       define('MODULE_PAYMENT_SECUREPAYXML_ORDER_STATUS_ID', '');
       define('MODULE_PAYMENT_SECUREPAYXML_MODE', '');
       define('MODULE_PAYMENT_SECUREPAYXML_ZONE', '');
-
   }      //BMH 2025-02-15 for uninstall
   
   return $define;
- 
